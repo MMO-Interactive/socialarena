@@ -1,0 +1,243 @@
+.actor-hero {
+    border-radius: 16px;
+    overflow: hidden;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    margin-bottom: 20px;
+}
+
+.actor-cover {
+    height: 180px;
+    background: radial-gradient(circle at 20% 20%, rgba(52, 152, 219, 0.2), transparent 60%),
+                radial-gradient(circle at 80% 0%, rgba(16, 185, 129, 0.2), transparent 60%),
+                var(--bg-primary);
+    position: relative;
+}
+
+.actor-cover img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    opacity: 0.6;
+}
+
+.actor-hero-content {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+    padding: 16px 20px;
+    margin-top: -60px;
+    position: relative;
+    z-index: 2;
+}
+
+.actor-avatar {
+    width: 120px;
+    height: 120px;
+    border-radius: 20px;
+    overflow: hidden;
+    border: 4px solid var(--bg-secondary);
+    background: var(--bg-primary);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+}
+
+.actor-avatar img,
+.actor-avatar .avatar-placeholder {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.actor-identity h1 {
+    margin: 0 0 6px 0;
+}
+
+.actor-meta {
+    color: var(--text-secondary);
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.actor-hero-actions {
+    margin-left: auto;
+}
+
+.actor-stats {
+    display: flex;
+    gap: 24px;
+    padding: 0 20px 16px;
+    color: var(--text-secondary);
+}
+
+.actor-stats strong {
+    display: block;
+    color: var(--text-primary);
+    font-size: 1.1em;
+}
+
+.actor-profile-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+    gap: 18px;
+}
+
+.profile-card {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 16px;
+}
+
+.bio-card {
+    grid-column: span 2;
+}
+
+.upload-form {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.upload-form input {
+    background: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    padding: 6px 10px;
+    color: var(--text-primary);
+}
+
+.profile-notes {
+    width: 100%;
+    min-height: 120px;
+    margin-bottom: 10px;
+    background: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    padding: 8px 10px;
+    color: var(--text-primary);
+}
+
+.gallery-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 10px;
+}
+
+.gallery-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 16px;
+    margin-bottom: 16px;
+}
+
+.gallery-create {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.gallery-create input {
+    background: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    padding: 6px 10px;
+    color: var(--text-primary);
+}
+
+.gallery-groups {
+    display: grid;
+    gap: 16px;
+    margin-top: 16px;
+}
+
+.gallery-group {
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 12px;
+    background: var(--bg-primary);
+}
+
+.gallery-group.legacy-group {
+    border-style: dashed;
+}
+
+.gallery-group-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.gallery-group-header h3 {
+    margin: 0 0 6px;
+}
+
+.gallery-count {
+    color: var(--text-secondary);
+    font-size: 0.85em;
+}
+
+.gallery-item img {
+    width: 100%;
+    height: 120px;
+    border-radius: 8px;
+    object-fit: cover;
+}
+
+.gallery-item span {
+    display: block;
+    margin-top: 6px;
+    color: var(--text-secondary);
+    font-size: 0.85em;
+}
+
+.audio-item {
+    display: grid;
+    gap: 6px;
+    margin-bottom: 10px;
+}
+
+.production-item {
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.production-item:last-child {
+    border-bottom: none;
+}
+
+.form-label {
+    display: block;
+    margin: 10px 0 6px;
+    color: var(--text-secondary);
+}
+
+.empty-state {
+    color: var(--text-secondary);
+}
+
+@media (max-width: 900px) {
+    .actor-hero-content {
+        flex-direction: column;
+        align-items: flex-start;
+        margin-top: -40px;
+    }
+    .actor-hero-actions {
+        margin-left: 0;
+    }
+    .actor-profile-grid {
+        grid-template-columns: 1fr;
+    }
+    .bio-card {
+        grid-column: span 1;
+    }
+    .gallery-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+}

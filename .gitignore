@@ -1,0 +1,23 @@
+# Runtime and local state
+logs/
+sessions/
+
+# User/generated media and local uploads
+uploads/
+
+# Node dependencies and package manager state
+node_modules/
+standalone-editor/node_modules/
+standalone-editor-v2/node_modules/
+
+# Local environment and editor noise
+.env
+.env.*
+*.local
+Thumbs.db
+Desktop.ini
+
+# Archive/output noise
+*.log
+*.tmp
+*.bak

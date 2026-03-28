@@ -1,0 +1,58 @@
+.series-cast-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.series-cast-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 20px;
+}
+
+.cast-form,
+.cast-list {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 16px;
+}
+
+.form-row {
+    display: grid;
+    gap: 6px;
+    margin-bottom: 12px;
+}
+
+.form-row input,
+.form-row select {
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    padding: 8px 10px;
+}
+
+.cast-card {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    background: var(--card-bg);
+    margin-bottom: 10px;
+}
+
+.muted {
+    color: var(--text-secondary);
+    font-size: 0.9em;
+}
+
+@media (max-width: 900px) {
+    .series-cast-layout {
+        grid-template-columns: 1fr;
+    }
+}

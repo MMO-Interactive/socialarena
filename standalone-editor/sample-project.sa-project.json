@@ -1,0 +1,46 @@
+{
+  "schema_version": 1,
+  "saved_at": "2026-03-13T20:15:00Z",
+  "active_project_id": "episode-1",
+  "projects": [
+    {
+      "id": "episode-1",
+      "name": "Episode 1 Rough Cut",
+      "type": "episode",
+      "clipCount": 12,
+      "fps": 24,
+      "status": "Connected",
+      "syncLabel": "Imported from local sample",
+      "previewLabel": "1080p Draft",
+      "timecode": "00:00:00:00",
+      "selectedLabel": "Clip Selected",
+      "assets": [
+        { "id": "asset-scene-1", "name": "Opening Clip", "kind": "video", "meta": "8.0 sec" },
+        { "id": "asset-scene-2", "name": "Scene 02", "kind": "video", "meta": "6.2 sec" },
+        { "id": "asset-title", "name": "Episode Title", "kind": "image", "meta": "title card" },
+        { "id": "asset-theme", "name": "Theme Track", "kind": "audio", "meta": "46 sec" }
+      ],
+      "timeline": {
+        "duration": 60,
+        "tracks": [
+          {
+            "id": "video-1",
+            "label": "V1",
+            "items": [
+              { "id": "clip-opening", "name": "Opening Clip", "kind": "video", "width": "36%", "sourceIn": "00:00:00", "sourceOut": "00:00:08", "volume": 80 },
+              { "id": "clip-scene-2", "name": "Scene 02", "kind": "video", "width": "22%", "sourceIn": "00:00:00", "sourceOut": "00:00:06", "volume": 100 },
+              { "id": "clip-title", "name": "Title", "kind": "title", "width": "16%", "sourceIn": "00:00:00", "sourceOut": "00:00:03", "volume": 0 }
+            ]
+          },
+          {
+            "id": "audio-1",
+            "label": "A1",
+            "items": [
+              { "id": "clip-theme", "name": "Theme Track", "kind": "audio", "width": "58%", "sourceIn": "00:00:00", "sourceOut": "00:00:46", "volume": 70 }
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

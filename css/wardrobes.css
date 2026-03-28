@@ -1,0 +1,120 @@
+.wardrobe-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.wardrobe-header p {
+    color: var(--text-secondary);
+    margin-top: 6px;
+}
+
+.wardrobe-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 16px;
+}
+
+.wardrobe-card {
+    display: flex;
+    flex-direction: column;
+    border-radius: 12px;
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    overflow: hidden;
+}
+
+.wardrobe-cover img {
+    width: 100%;
+    height: 140px;
+    object-fit: cover;
+    display: block;
+}
+
+.wardrobe-cover .cover-placeholder {
+    height: 140px;
+    background: var(--bg-secondary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-secondary);
+    font-weight: 600;
+}
+
+.wardrobe-info {
+    padding: 14px 16px 10px;
+}
+
+.wardrobe-info h3 {
+    margin: 0 0 6px;
+}
+
+.wardrobe-meta {
+    display: flex;
+    gap: 8px;
+    color: var(--text-secondary);
+    font-size: 0.85em;
+    flex-wrap: wrap;
+}
+
+.wardrobe-tags {
+    margin-top: 6px;
+    color: var(--text-secondary);
+    font-size: 0.85em;
+}
+
+.wardrobe-actions {
+    display: flex;
+    gap: 8px;
+    padding: 0 16px 16px;
+}
+
+.modal {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.6);
+    z-index: 2000;
+}
+
+.modal-content {
+    background: var(--bg-secondary);
+    border-radius: 12px;
+    padding: 20px;
+    width: 90%;
+    max-width: 520px;
+    border: 1px solid var(--border-color);
+    max-height: calc(100vh - 120px);
+    overflow-y: auto;
+}
+
+
+.form-group {
+    margin-bottom: 14px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 6px;
+    color: var(--text-secondary);
+}
+
+.form-group input,
+.form-group textarea,
+.form-group select {
+    width: 100%;
+    border-radius: 6px;
+    border: 1px solid var(--border-color);
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    padding: 8px 10px;
+}
+
+.modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+}

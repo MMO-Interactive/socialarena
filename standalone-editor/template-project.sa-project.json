@@ -1,0 +1,35 @@
+{
+  "schema_version": 1,
+  "saved_at": "2026-03-14T00:08:38.287Z",
+  "active_project_id": "template-project",
+  "projects": [
+    {
+      "id": "template-project",
+      "name": "New SocialArena Project",
+      "type": "episode",
+      "clipCount": 0,
+      "fps": 24,
+      "status": "Template",
+      "syncLabel": "Not synced",
+      "previewLabel": "1080p Draft",
+      "timecode": "00:00:00:00",
+      "selectedLabel": "No Selection",
+      "assets": [],
+      "timeline": {
+        "duration": 30,
+        "tracks": [
+          {
+            "id": "video-1",
+            "label": "V1",
+            "items": []
+          },
+          {
+            "id": "audio-1",
+            "label": "A1",
+            "items": []
+          }
+        ]
+      }
+    }
+  ]
+}

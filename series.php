@@ -1,0 +1,289 @@
+<?php
+require_once 'includes/db_connect.php';
+require_once 'includes/studio_access.php';
+if (session_status() !== PHP_SESSION_ACTIVE) {
+    session_start();
+}
+
+
+// Check if user is logged in
+if (!isset($_SESSION['user_id'])) {
+    header('Location: login.php');
+    exit;
+}
+
+// Check if series ID is provided
+if (!isset($_GET['id'])) {
+    header('Location: writing_center.php');
+    exit;
+}
+
+$series_id = (int)$_GET['id'];
+$theme = $_SESSION['theme'] ?? 'light';
+
+// Get series details with universe info if it exists
+$stmt = $pdo->prepare("
+    SELECT s.*, u.title as universe_title, u.id as universe_id,
+           COUNT(st.id) as story_count
+    FROM series s
+    LEFT JOIN universes u ON s.universe_id = u.id
+    LEFT JOIN stories st ON s.id = st.series_id
+    WHERE s.id = ?
+    GROUP BY s.id
+");
+$stmt->execute([$series_id]);
+$series = $stmt->fetch();
+
+if (!$series) {
+    header('Location: writing_center.php');
+    exit;
+}
+
+try {
+    enforceSeriesAccess($pdo, $series_id, (int)$_SESSION['user_id'], false);
+} catch (Exception $e) {
+    header('Location: writing_center.php');
+    exit;
+}
+
+// Get seasons and episodes for media mapping
+$stmt = $pdo->prepare("SELECT * FROM series_seasons WHERE series_id = ? ORDER BY season_number ASC");
+$stmt->execute([$series_id]);
+$seasons = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+$episodes = [];
+if (!empty($seasons)) {
+    $seasonIds = array_column($seasons, 'id');
+    $placeholders = implode(',', array_fill(0, count($seasonIds), '?'));
+    $stmt = $pdo->prepare("SELECT * FROM series_episodes WHERE season_id IN ($placeholders) ORDER BY season_id ASC, episode_number ASC");
+    $stmt->execute($seasonIds);
+    $episodes = $stmt->fetchAll(PDO::FETCH_ASSOC);
+}
+
+// Get stories in this series
+$userId = (int)$_SESSION['user_id'];
+[$storyWhere, $storyParams] = buildStudioVisibilityWhere('s', $userId, 'stories');
+$stmt = $pdo->prepare("
+    SELECT s.*, 
+           COUNT(DISTINCT sr.id) as rating_count,
+           COALESCE(AVG(sr.rating), 0) as avg_rating
+    FROM stories s
+    LEFT JOIN story_ratings sr ON s.id = sr.story_id
+    WHERE s.series_id = ? AND {$storyWhere}
+    GROUP BY s.id
+    ORDER BY s.story_order, s.created_at DESC
+");
+$stmt->execute(array_merge([$series_id], $storyParams));
+$stories = $stmt->fetchAll();
+?>
+
+<!DOCTYPE html>
+<html lang="en" data-theme="<?php echo $theme; ?>">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><?php echo htmlspecialchars($series['title']); ?> - Series Management</title>
+    <link rel="stylesheet" href="css/themes/<?php echo $theme; ?>.css">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/universe.css">
+    <link rel="stylesheet" href="css/series_media.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="js/delete-content.js" defer></script>
+</head>
+<body>
+    <div class="page-wrapper">
+        <?php include 'includes/header.php'; ?>
+        
+        <div class="content-wrapper">
+            <?php include 'includes/navigation.php'; ?>
+            
+            <main class="main-content">
+                <!-- Series Cover Image -->
+                <div class="universe-cover">
+                    <img src="<?php echo htmlspecialchars($series['cover_image'] ?? 'images/default-series.svg'); ?>" 
+                         alt="<?php echo htmlspecialchars($series['title']); ?>">
+                </div>
+
+                <!-- Series Title and Description -->
+                <h1><?php echo htmlspecialchars($series['title']); ?></h1>
+                
+                <?php if ($series['universe_id']): ?>
+                    <div class="universe-link">
+                        Part of Universe: 
+                        <a href="universe.php?id=<?php echo $series['universe_id']; ?>">
+                            <?php echo htmlspecialchars($series['universe_title']); ?>
+                        </a>
+                    </div>
+                <?php endif; ?>
+
+                <p class="series-description">
+                    <?php echo htmlspecialchars($series['description']); ?>
+                </p>
+
+                <!-- Series Stats -->
+                <div class="universe-stats">
+                    <div class="stat">
+                        <span class="stat-value"><?php echo $series['story_count']; ?></span>
+                        <span class="stat-label">Stories</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-value"><?php echo ucfirst($series['status']); ?></span>
+                        <span class="stat-label">Status</span>
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="universe-actions">
+                    <a href="create_story.php?series_id=<?php echo $series_id; ?>" class="btn">
+                        <i class="fas fa-plus"></i> Add Story
+                    </a>
+                    <a href="series_cast.php?series_id=<?php echo $series_id; ?>" class="btn">
+                        <i class="fas fa-user-friends"></i> Cast
+                    </a>
+                    <a href="series_social.php?series_id=<?php echo $series_id; ?>" class="btn">
+                        <i class="fas fa-bullhorn"></i> Social Manager
+                    </a>
+                    <a href="series_codex.php?series_id=<?php echo $series_id; ?>" class="btn">
+                        <i class="fas fa-book"></i> Series Codex
+                    </a>
+                    <a href="edit_series.php?id=<?php echo $series_id; ?>" class="btn">
+                        <i class="fas fa-edit"></i> Edit Series
+                    </a>
+                    <button onclick='confirmDelete("series", <?php echo $series_id; ?>, "<?php echo htmlspecialchars(addslashes($series['title'])); ?>")' 
+                            class="btn danger-btn">
+                        <i class="fas fa-trash"></i> Delete Series
+                    </button>
+                </div>
+
+                <section class="series-media">
+                    <h2>Public Media</h2>
+                    <p class="series-description">Add trailers, clips, and screenshots that will show on the public series page.</p>
+                    <div class="media-form">
+                        <div class="form-row">
+                            <label>Type</label>
+                            <select id="media-type">
+                                <option value="trailer">Trailer</option>
+                                <option value="clip">Clip</option>
+                                <option value="screenshot">Screenshot</option>
+                            </select>
+                        </div>
+                        <div class="form-row">
+                            <label>Title</label>
+                            <input type="text" id="media-title" placeholder="Teaser Trailer">
+                        </div>
+                        <div class="form-row" id="media-url-row">
+                            <label>URL (YouTube or Image URL)</label>
+                            <input type="text" id="media-url" placeholder="https://youtube.com/watch?v=...">
+                        </div>
+                        <div class="form-row hidden" id="media-image-row">
+                            <label>Screenshot Upload</label>
+                            <input type="file" id="media-image" accept="image/*">
+                        </div>
+                        <div class="form-row">
+                            <label>Thumbnail (optional)</label>
+                            <input type="file" id="media-thumb" accept="image/*">
+                        </div>
+                        <div class="form-row">
+                            <label>Season (optional)</label>
+                            <select id="media-season">
+                                <option value="">None</option>
+                                <?php foreach ($seasons as $season): ?>
+                                    <option value="<?php echo (int)$season['id']; ?>">Season <?php echo (int)$season['season_number']; ?></option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+                        <div class="form-row">
+                            <label>Episode (optional)</label>
+                            <select id="media-episode">
+                                <option value="">None</option>
+                                <?php foreach ($episodes as $episode): ?>
+                                    <option value="<?php echo (int)$episode['id']; ?>">E<?php echo (int)$episode['episode_number']; ?> - <?php echo htmlspecialchars($episode['title'] ?? 'Untitled'); ?></option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+                        <button class="btn" id="media-add" data-series-id="<?php echo $series_id; ?>">Add Media</button>
+                    </div>
+                    <div class="media-list" id="media-list"></div>
+                </section>
+
+                <div class="modal" id="release-modal" style="display:none;">
+                    <div class="modal-content release-modal">
+                        <div class="release-header">
+                            <h2>Release Media</h2>
+                            <button class="btn secondary-btn" id="release-close">Close</button>
+                        </div>
+                        <div class="form-group">
+                            <label>Release Title</label>
+                            <input type="text" id="release-title" placeholder="Release title">
+                        </div>
+                        <div class="form-group">
+                            <label>Release Description</label>
+                            <textarea id="release-description" placeholder="Write a short release note..."></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label>Thumbnail URL (optional)</label>
+                            <input type="text" id="release-thumbnail" placeholder="https://...">
+                        </div>
+                        <div class="form-group">
+                            <label>Status</label>
+                            <select id="release-status">
+                                <option value="released">Release now</option>
+                                <option value="draft">Save as draft</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Visibility</label>
+                            <select id="release-visibility">
+                                <option value="public">Public</option>
+                                <option value="studio">Studio</option>
+                                <option value="private">Private</option>
+                            </select>
+                        </div>
+                        <div class="release-actions">
+                            <button class="btn primary-btn" id="release-save">Save Release</button>
+                        </div>
+                        <div class="release-result" id="release-result" style="display:none;"></div>
+                    </div>
+                </div>
+
+                <!-- Stories Section -->
+                <section>
+                    <h2>Stories</h2>
+                    <div class="stories-list">
+                        <?php foreach ($stories as $story): ?>
+                            <div class="content-card">
+                                <div class="card-thumbnail">
+                                    <img src="<?php echo htmlspecialchars($story['thumbnail_url'] ?? 'images/default-story.svg'); ?>" 
+                                         alt="Story thumbnail">
+                                </div>
+                                <div class="card-content">
+                                    <h3><?php echo htmlspecialchars($story['title']); ?></h3>
+                                    <div class="card-meta">
+                                        <span>Genre: <?php echo htmlspecialchars($story['genre']); ?></span>
+                                        <span class="status-pill <?php echo strtolower($story['status']); ?>">
+                                            <?php echo ucfirst($story['status']); ?>
+                                        </span>
+                                    </div>
+                                    <div class="card-actions">
+                                        <a href="edit_story.php?id=<?php echo $story['id']; ?>" 
+                                           class="action-btn full-width">Edit</a>
+                                        <a href="story.php?id=<?php echo $story['id']; ?>" 
+                                           class="action-btn dark full-width">View</a>
+                                        <a href="story_planner.php?id=<?php echo $story['id']; ?>" 
+                                           class="action-btn">Plan</a>
+                                        <a href="write_story.php?id=<?php echo $story['id']; ?>" 
+                                           class="action-btn">Write</a>
+                                    </div>
+                                </div>
+                            </div>
+                        <?php endforeach; ?>
+                    </div>
+                </section>
+            </main>
+        </div>
+        
+        <?php include 'includes/footer.php'; ?>
+    </div>
+<script src="js/series_media.js"></script>
+</body>
+</html> 

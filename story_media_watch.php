@@ -1,0 +1,163 @@
+<?php
+require_once 'includes/db_connect.php';
+if (session_status() !== PHP_SESSION_ACTIVE) {
+    session_start();
+}
+
+
+$media_id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
+if (!$media_id) {
+    header('Location: index.php');
+    exit;
+}
+
+$user_id = $_SESSION['user_id'] ?? null;
+$params = [$media_id];
+$sql = "SELECT spm.*, s.title AS story_title, s.created_by, s.studio_id
+        FROM story_public_media spm
+        JOIN stories s ON spm.story_id = s.id
+        WHERE spm.id = ? AND spm.release_status = 'released' AND (spm.visibility = 'public'";
+if ($user_id) {
+    $sql .= " OR s.created_by = ? OR (s.studio_id IN (SELECT studio_id FROM studio_permissions WHERE user_id = ? AND permission_key = 'stories' AND allowed = 1))";
+    $params[] = $user_id;
+    $params[] = $user_id;
+}
+$sql .= ")";
+$stmt = $pdo->prepare($sql);
+$stmt->execute($params);
+$media = $stmt->fetch(PDO::FETCH_ASSOC);
+if (!$media) {
+    header('Location: index.php');
+    exit;
+}
+
+$stmt = $pdo->prepare("SELECT COUNT(*) FROM story_public_media_likes WHERE media_id = ?");
+$stmt->execute([$media_id]);
+$likeCount = (int)$stmt->fetchColumn();
+
+$userLiked = false;
+if ($user_id) {
+    $stmt = $pdo->prepare("SELECT id FROM story_public_media_likes WHERE media_id = ? AND user_id = ?");
+    $stmt->execute([$media_id, $user_id]);
+    $userLiked = (bool)$stmt->fetchColumn();
+}
+
+$stmt = $pdo->prepare("SELECT c.*, u.username, u.profile_photo FROM story_public_media_comments c JOIN users u ON c.user_id = u.id WHERE c.media_id = ? ORDER BY c.created_at DESC");
+$stmt->execute([$media_id]);
+$comments = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+$suggested = [];
+
+$page_title = 'Watch - ' . htmlspecialchars($media['title'] ?? 'Media');
+$additional_css = ['css/story_public.css', 'css/public_header.css'];
+$body_class = 'public-series-page';
+
+include 'includes/header.php';
+?>
+
+<?php include 'includes/public_header.php'; ?>
+<div class="page-wrapper public-series-wrapper">
+    <div class="content-wrapper">
+        <main class="main-content full-width">
+
+            <section class="series-section">
+                <div class="watch-grid">
+                    <div class="watch-main">
+                        <div class="watch-media">
+                            <?php if ($media['media_type'] === 'screenshot'): ?>
+                                <img src="<?php echo htmlspecialchars($media['url']); ?>" alt="<?php echo htmlspecialchars($media['title'] ?? 'Screenshot'); ?>">
+                            <?php else: ?>
+                                <?php
+                                    $videoId = '';
+                                    if (preg_match('~v=([^&]+)~', $media['url'], $matches)) {
+                                        $videoId = $matches[1];
+                                    } elseif (preg_match('~youtu\.be/([^?]+)~', $media['url'], $matches)) {
+                                        $videoId = $matches[1];
+                                    }
+                                ?>
+                                <?php if (!empty($videoId)): ?>
+                                    <iframe src="https://www.youtube.com/embed/<?php echo htmlspecialchars($videoId); ?>" frameborder="0" allowfullscreen></iframe>
+                                <?php else: ?>
+                                    <div class="media-placeholder">Invalid YouTube URL</div>
+                                <?php endif; ?>
+                            <?php endif; ?>
+                        </div>
+                        <div class="watch-title">
+                            <h2><?php echo htmlspecialchars($media['release_title'] ?: ($media['title'] ?? 'Untitled')); ?></h2>
+                            <p><a href="story_public.php?id=<?php echo (int)$media['story_id']; ?>"><?php echo htmlspecialchars($media['story_title']); ?></a></p>
+                        </div>
+                        <?php if (!empty($media['release_description'])): ?>
+                            <div class="watch-description">
+                                <?php echo nl2br(htmlspecialchars($media['release_description'])); ?>
+                            </div>
+                        <?php endif; ?>
+                        <div class="watch-actions">
+                            <?php if ($user_id): ?>
+                                <button class="btn" id="like-btn" data-liked="<?php echo $userLiked ? '1' : '0'; ?>" data-media-id="<?php echo $media_id; ?>">
+                                    <?php echo $userLiked ? 'Liked' : 'Like'; ?> (<?php echo $likeCount; ?>)
+                                </button>
+                            <?php else: ?>
+                                <a class="btn" href="login.php">Login to Like (<?php echo $likeCount; ?>)</a>
+                            <?php endif; ?>
+                            <a class="btn btn-secondary" href="story_public.php?id=<?php echo (int)$media['story_id']; ?>">Back to Film</a>
+                        </div>
+                        <div class="comment-section">
+                            <h3>Comments</h3>
+                            <?php if ($user_id): ?>
+                                <form id="comment-form">
+                                    <textarea id="comment-text" placeholder="Add a comment..."></textarea>
+                                    <button class="btn" type="submit">Post</button>
+                                </form>
+                            <?php else: ?>
+                                <p class="muted">Login to like and comment.</p>
+                            <?php endif; ?>
+                            <div class="comment-list" id="comment-list">
+                                <?php foreach ($comments as $comment): ?>
+                                    <div class="comment-item">
+                                        <div class="comment-avatar">
+                                            <?php if (!empty($comment['profile_photo'])): ?>
+                                                <img src="<?php echo htmlspecialchars($comment['profile_photo']); ?>" alt="">
+                                            <?php else: ?>
+                                                <span><?php echo strtoupper(substr($comment['username'], 0, 1)); ?></span>
+                                            <?php endif; ?>
+                                        </div>
+                                        <div class="comment-body">
+                                            <strong><?php echo htmlspecialchars($comment['username']); ?></strong>
+                                            <span><?php echo htmlspecialchars($comment['comment']); ?></span>
+                                            <div class="comment-meta"><?php echo date('M j, Y', strtotime($comment['created_at'])); ?></div>
+                                            <div class="comment-actions">Like ? Reply</div>
+                                        </div>
+                                    </div>
+                                <?php endforeach; ?>
+                            </div>
+                        </div>
+                    </div>
+                    <aside class="watch-sidebar">
+                        <div class="sidebar-card">
+                            <h3>Sponsored</h3>
+                            <div class="ad-slot">Ad placement</div>
+                        </div>
+                        <div class="sidebar-card">
+                            <h3>Suggested Clips</h3>
+                            <div class="suggested-list">
+                                <?php foreach ($suggested as $s): ?>
+                                    <a href="story_media_watch.php?id=<?php echo (int)$s['id']; ?>" class="suggested-item">
+                                        <img src="<?php echo htmlspecialchars($s['thumbnail_url'] ?: 'images/default-story.svg'); ?>" alt="">
+                                        <div>
+                                            <strong><?php echo htmlspecialchars($s['title'] ?? 'Untitled'); ?></strong>
+                                            <span><?php echo strtoupper($s['media_type']); ?></span>
+                                        </div>
+                                    </a>
+                                <?php endforeach; ?>
+                            </div>
+                        </div>
+                    </aside>
+                </div>
+            </section>
+        </main>
+    </div>
+</div>
+
+<script src="js/story_media_watch.js"></script>
+
+

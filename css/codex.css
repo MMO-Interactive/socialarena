@@ -1,0 +1,148 @@
+/* Main codex entry layout */
+.codex-entry {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 30px;
+    background: var(--bg-secondary);
+    border-radius: 8px;
+    box-shadow: 0 2px 5px var(--shadow);
+}
+
+/* Entry header styling */
+.entry-header {
+    margin-bottom: 30px;
+    padding-bottom: 20px;
+    border-bottom: 2px solid var(--accent-color);
+}
+
+.entry-header h1 {
+    color: var(--text-primary);
+    font-size: 2em;
+    margin: 0 0 15px 0;
+}
+
+.entry-universe,
+.entry-series {
+    color: var(--text-secondary);
+    font-size: 0.9em;
+    margin-top: 5px;
+}
+
+/* Entry content styling */
+.entry-content {
+    color: var(--text-primary);
+    line-height: 1.8;
+    font-size: 1.1em;
+    margin-bottom: 40px;
+}
+
+.entry-content p {
+    margin-bottom: 1.5em;
+}
+
+/* Related entries section */
+.related-entries {
+    margin-top: 40px;
+    padding-top: 30px;
+    border-top: 1px solid var(--border-color);
+}
+
+.related-entries h2 {
+    color: var(--text-primary);
+    font-size: 1.5em;
+    margin-bottom: 20px;
+}
+
+.related-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 20px;
+}
+
+.related-entry {
+    padding: 15px;
+    background: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    text-decoration: none;
+    transition: all 0.2s ease;
+}
+
+.related-entry:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px var(--shadow);
+    border-color: var(--accent-color);
+}
+
+.related-entry h3 {
+    color: var(--text-primary);
+    margin: 0 0 5px 0;
+    font-size: 1.1em;
+}
+
+.entry-type {
+    color: var(--text-secondary);
+    font-size: 0.9em;
+    text-transform: capitalize;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .codex-entry {
+        padding: 20px;
+        margin: 10px;
+    }
+
+    .entry-header h1 {
+        font-size: 1.6em;
+    }
+
+    .related-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Entry metadata */
+.entry-metadata {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    margin: 20px 0;
+    padding: 15px;
+    background: var(--bg-primary);
+    border-radius: 6px;
+}
+
+.metadata-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--text-secondary);
+    font-size: 0.9em;
+}
+
+.metadata-item i {
+    color: var(--accent-color);
+}
+
+/* Tags styling */
+.entry-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 15px 0;
+}
+
+.tag {
+    background: var(--bg-primary);
+    color: var(--text-secondary);
+    padding: 4px 10px;
+    border-radius: 15px;
+    font-size: 0.85em;
+    transition: all 0.2s ease;
+}
+
+.tag:hover {
+    background: var(--accent-color);
+    color: white;
+} 

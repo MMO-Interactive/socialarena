@@ -1,0 +1,13 @@
+{
+  "name": "socialarena-standalone-editor",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Minimal standalone desktop shell for SocialArena Editor.",
+  "main": "main.js",
+  "scripts": {
+    "start": "node launch.js"
+  },
+  "devDependencies": {
+    "electron": "^35.0.0"
+  }
+}

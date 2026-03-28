@@ -1,0 +1,230 @@
+.clip-header h1 {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.clip-header h1::before {
+    content: '🎬';
+    font-size: 1.1em;
+}
+
+.clip-image-block {
+    display: grid;
+    gap: 12px;
+}
+
+.clip-image-preview {
+    width: 100%;
+    max-height: 280px;
+    object-fit: cover;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.clip-hero {
+    display: flex;
+    justify-content: space-between;
+    gap: 24px;
+    padding: 24px;
+    border-radius: 18px;
+    background: linear-gradient(135deg, rgba(20, 28, 40, 0.95), rgba(15, 20, 30, 0.8));
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    margin-bottom: 20px;
+}
+
+.clip-hero-label {
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    letter-spacing: 0.2em;
+    color: rgba(255, 255, 255, 0.5);
+    margin-bottom: 6px;
+}
+
+.clip-hero-main h1 {
+    margin: 0 0 8px;
+}
+
+.clip-hero-subtitle {
+    margin: 0 0 10px;
+    color: rgba(255, 255, 255, 0.65);
+}
+
+.clip-hero-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 0.85rem;
+}
+
+.clip-hero-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    align-items: flex-end;
+}
+
+.clip-pipeline {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 12px;
+    margin-bottom: 18px;
+}
+
+.clip-step {
+    background: rgba(15, 22, 32, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+    padding: 12px;
+    display: grid;
+    gap: 6px;
+}
+
+.clip-step.active {
+    border-color: rgba(77, 163, 255, 0.6);
+    box-shadow: 0 0 0 1px rgba(77, 163, 255, 0.2);
+}
+
+.clip-step-title {
+    font-weight: 600;
+    font-size: 0.95rem;
+}
+
+.clip-step-desc {
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 0.8rem;
+}
+
+.clip-overview {
+    display: grid;
+    gap: 10px;
+    margin-top: 12px;
+}
+
+.clip-overview .label {
+    display: block;
+    font-size: 0.75rem;
+    color: rgba(255, 255, 255, 0.6);
+}
+
+.clip-preview-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+    margin-bottom: 20px;
+}
+
+.clip-preview-card {
+    background: rgba(15, 22, 32, 0.9);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 16px;
+    padding: 16px;
+    display: grid;
+    gap: 12px;
+}
+
+.clip-preview-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+}
+
+.clip-preview-label {
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    font-size: 0.7rem;
+    color: rgba(255, 255, 255, 0.5);
+}
+
+.clip-preview-body {
+    position: relative;
+}
+
+.clip-preview-body img,
+.clip-preview-body video {
+    width: 100%;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(0, 0, 0, 0.35);
+}
+
+.clip-preview-body video {
+    max-height: 340px;
+}
+
+.clip-preview-empty {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 0.9rem;
+    text-align: center;
+    padding: 16px;
+    background: rgba(0, 0, 0, 0.35);
+    border-radius: 12px;
+}
+
+.clip-preview-actions {
+    display: flex;
+    justify-content: flex-end;
+}
+
+.clip-status-pill {
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-size: 0.7rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    background: rgba(255, 255, 255, 0.08);
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.clip-status-pill.status-queued {
+    background: rgba(246, 200, 60, 0.2);
+    color: #f6c83c;
+}
+
+.clip-status-pill.status-generated {
+    background: rgba(75, 210, 140, 0.2);
+    color: #4bd28c;
+}
+
+.clip-status-pill.status-failed {
+    background: rgba(255, 85, 85, 0.2);
+    color: #ff5555;
+}
+
+.generated-video {
+    width: 100%;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    margin-bottom: 12px;
+}
+
+@media (max-width: 1100px) {
+    .clip-hero {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    .clip-hero-actions {
+        flex-direction: row;
+        flex-wrap: wrap;
+        align-items: center;
+    }
+    .clip-pipeline {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+    .clip-preview-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 720px) {
+    .clip-pipeline {
+        grid-template-columns: 1fr;
+    }
+}

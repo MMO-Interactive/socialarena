@@ -1,0 +1,71 @@
+.suggestions-container {
+    margin-top: 10px;
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.suggestions-list {
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    background: var(--bg-secondary);
+}
+
+.suggestion-item {
+    padding: 10px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border-bottom: 1px solid var(--border-color);
+    color: var(--text-primary);
+}
+
+.suggestion-item:last-child {
+    border-bottom: none;
+}
+
+.suggestion-item:hover,
+.suggestion-hover {
+    background: var(--accent-color);
+    color: white;
+}
+
+.input-group {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+}
+
+.suggestion-btn {
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.suggestion-btn i {
+    font-size: 0.9em;
+}
+
+/* Update story actions styling */
+.story-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.action-btn {
+    padding: 8px 16px;
+    border-radius: 4px;
+    text-decoration: none;
+    color: white;
+    background: var(--accent-color);
+    transition: all 0.2s ease;
+}
+
+.action-btn:hover {
+    opacity: 0.9;
+    transform: translateY(-1px);
+}
+
+.action-btn.dark {
+    background: #2c3e50;
+} 

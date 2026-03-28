@@ -1,0 +1,445 @@
+/* Main Layout */
+.planner-header {
+    margin-bottom: 20px;
+}
+
+.planner-hero {
+    display: flex;
+    justify-content: space-between;
+    gap: 24px;
+    padding: 20px;
+    background: linear-gradient(135deg, rgba(20, 28, 40, 0.95), rgba(15, 20, 30, 0.8));
+    border-radius: 18px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.planner-label {
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    letter-spacing: 0.2em;
+    color: rgba(255, 255, 255, 0.5);
+    margin-bottom: 6px;
+}
+
+.planner-hero-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-content: flex-start;
+    justify-content: flex-end;
+    min-width: 240px;
+}
+
+.planner-pipeline {
+    margin-top: 16px;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 10px;
+}
+
+.pipeline-step {
+    background: rgba(15, 22, 32, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+    padding: 10px 12px;
+    display: grid;
+    gap: 4px;
+}
+
+.pipeline-step span {
+    font-weight: 600;
+}
+
+.pipeline-step small {
+    color: rgba(255, 255, 255, 0.6);
+}
+
+.pipeline-step.active {
+    border-color: rgba(77, 163, 255, 0.6);
+    box-shadow: 0 0 0 1px rgba(77, 163, 255, 0.2);
+}
+
+.planner-title {
+    display: grid;
+    gap: 6px;
+}
+
+.planner-description {
+    color: var(--text-secondary);
+    margin: 0;
+}
+
+.planner-meta {
+    display: flex;
+    gap: 16px;
+    color: var(--text-secondary);
+    font-size: 0.9em;
+}
+
+.planner-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 12px;
+}
+
+.story-structure {
+    padding: 20px;
+    background: var(--bg-secondary);
+    border-radius: 8px;
+    box-shadow: 0 2px 5px var(--shadow);
+}
+
+/* Act Styling */
+.act {
+    margin-bottom: 20px;
+    background: var(--card-bg);
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+}
+
+.act-header {
+    display: flex;
+    align-items: center;
+    padding: 15px;
+    background: var(--bg-secondary);
+    border-radius: 8px 8px 0 0;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.act-toggle {
+    cursor: pointer;
+    padding: 5px;
+    margin-right: 10px;
+    color: var(--text-secondary);
+}
+
+.act-title {
+    flex: 1;
+    margin: 0;
+    color: var(--text-primary);
+    font-size: 1.2em;
+}
+
+.act-actions {
+    display: flex;
+    gap: 10px;
+}
+
+/* Chapter Styling */
+.chapters-list {
+    padding: 10px;
+}
+
+.chapter {
+    margin: 10px 0;
+    background: var(--bg-secondary);
+    border-radius: 6px;
+    border: 1px solid var(--border-color);
+}
+
+.chapter-header {
+    display: flex;
+    align-items: center;
+    padding: 12px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.chapter-toggle {
+    cursor: pointer;
+    padding: 5px;
+    margin-right: 10px;
+    color: var(--text-secondary);
+}
+
+.chapter-title {
+    flex: 1;
+    margin: 0;
+    color: var(--text-primary);
+    font-size: 1.1em;
+}
+
+.chapter-actions {
+    display: flex;
+    gap: 8px;
+}
+
+/* Scene Styling */
+.scenes-list {
+    padding: 8px;
+}
+
+.scene {
+    margin: 8px 0;
+    background: var(--card-bg);
+    border-radius: 4px;
+    border: 1px solid var(--border-color);
+}
+
+.scene-header {
+    display: flex;
+    align-items: center;
+    padding: 10px;
+}
+
+.scene-title {
+    flex: 1;
+    margin: 0;
+    color: var(--text-primary);
+    font-size: 1em;
+}
+
+.scene-actions {
+    display: flex;
+    gap: 6px;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+.scene-desc-toggle {
+    margin-right: 10px;
+    background: rgba(52, 152, 219, 0.15);
+    color: var(--text-primary);
+    border: 1px solid rgba(52, 152, 219, 0.4);
+}
+
+.scene:hover .scene-actions {
+    opacity: 1;
+}
+
+/* Word Count */
+.word-count {
+    color: var(--text-secondary);
+    font-size: 0.9em;
+    margin: 0 15px;
+}
+
+/* Buttons */
+.btn {
+    padding: 6px 12px;
+    border-radius: 4px;
+    border: none;
+    cursor: pointer;
+    font-size: 0.9em;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    transition: all 0.2s ease;
+}
+
+.btn i {
+    font-size: 0.9em;
+}
+
+.btn.primary-btn {
+    background: var(--accent-color);
+    color: white;
+}
+
+.btn.danger {
+    background: #e74c3c;
+    color: white;
+}
+
+.btn:hover {
+    opacity: 0.9;
+    transform: translateY(-1px);
+}
+
+/* Drag and Drop */
+.dragging {
+    opacity: 0.5;
+    background: var(--bg-primary);
+}
+
+.drag-handle {
+    cursor: move;
+    color: var(--text-secondary);
+    margin-right: 8px;
+}
+
+/* Editable Content */
+[contenteditable="true"] {
+    outline: none;
+    padding: 2px 5px;
+    border-radius: 3px;
+    transition: background-color 0.2s ease;
+}
+
+[contenteditable="true"]:hover {
+    background: var(--bg-primary);
+}
+
+[contenteditable="true"]:focus {
+    background: var(--bg-primary);
+    box-shadow: 0 0 0 2px var(--accent-color);
+}
+
+/* Collapse/Expand */
+.collapsed .chapters-list,
+.collapsed .scenes-list {
+    display: none;
+}
+
+.collapsed .act-toggle i,
+.collapsed .chapter-toggle i {
+    transform: rotate(-90deg);
+}
+
+.act-toggle i,
+.chapter-toggle i {
+    transition: transform 0.2s ease;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .planner-hero {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .planner-hero-actions {
+        justify-content: flex-start;
+    }
+
+    .act-header,
+    .chapter-header,
+    .scene-header {
+        flex-wrap: wrap;
+    }
+
+    .act-actions,
+    .chapter-actions {
+        width: 100%;
+        margin-top: 10px;
+        justify-content: flex-end;
+    }
+
+    .scene-actions {
+        opacity: 1;
+    }
+}
+
+/* Add these styles */
+.scene-description-container {
+    padding: 10px;
+    background: var(--bg-secondary);
+    border-top: 1px solid var(--border-color);
+}
+
+.scene-description {
+    width: 100%;
+    min-height: 100px;
+    padding: 10px;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    font-size: 0.9em;
+    resize: vertical;
+}
+
+.scene-description:focus {
+    outline: none;
+    border-color: var(--accent-color);
+    box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+}
+
+.scene-description::placeholder {
+    color: var(--text-secondary);
+} 
+
+.clips-section {
+    border-top: 1px solid var(--border-color);
+    padding: 10px;
+    background: rgba(15, 23, 42, 0.4);
+}
+
+.clip-image-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 10px;
+    margin-bottom: 12px;
+}
+
+.clip-image-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    padding: 8px;
+    display: grid;
+    gap: 6px;
+}
+
+.clip-image-card img {
+    width: 100%;
+    height: 140px;
+    object-fit: cover;
+    border-radius: 8px;
+}
+
+.clip-image-card span {
+    font-size: 0.8em;
+    color: var(--text-secondary);
+}
+
+@media (max-width: 900px) {
+    .clip-image-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+.clips-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+    color: var(--text-secondary);
+    font-size: 0.9em;
+}
+
+.clips-list {
+    display: grid;
+    gap: 8px;
+}
+
+.clip {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 10px;
+    border-radius: 6px;
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+}
+
+.clip-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.clip-thumb {
+    width: 44px;
+    height: 44px;
+    border-radius: 8px;
+    object-fit: cover;
+    border: 1px solid var(--border-color);
+    margin-bottom: 6px;
+}
+
+.clip-title {
+    margin: 0;
+    font-size: 0.95em;
+    color: var(--text-primary);
+}
+
+.clip-meta {
+    font-size: 0.75em;
+    color: var(--text-secondary);
+}
+
+.clip-actions {
+    display: flex;
+    gap: 6px;
+}

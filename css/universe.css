@@ -1,0 +1,232 @@
+.input-with-suggestion {
+    position: relative;
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+}
+
+.suggestion-btn {
+    background: var(--accent-color);
+    color: white;
+    padding: 8px 12px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    transition: all 0.2s ease;
+}
+
+.suggestion-btn:hover {
+    background: var(--accent-hover);
+}
+
+.suggestion-btn:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+.suggestions-container {
+    margin-top: 10px;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.suggestion-item {
+    padding: 10px;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.suggestion-item:hover {
+    background: var(--accent-color);
+    color: white;
+}
+
+.suggestion-item + .suggestion-item {
+    border-top: none;
+}
+
+/* Universe header and cover image */
+.universe-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+    padding: 20px;
+    background: var(--bg-secondary);
+    border-radius: 8px;
+    box-shadow: 0 2px 5px var(--shadow);
+}
+
+.universe-header h1 {
+    margin: 0;
+    color: var(--text-primary);
+}
+
+.universe-actions {
+    display: flex;
+    gap: 15px;
+}
+
+.codex-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 20px;
+    background: var(--accent-color);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    text-decoration: none;
+    transition: all 0.2s ease;
+}
+
+.codex-btn:hover {
+    background: var(--accent-hover);
+    transform: translateY(-2px);
+}
+
+.codex-btn i {
+    font-size: 1.1em;
+}
+
+.universe-cover {
+    position: relative;
+    width: 100%;
+    height: 300px; /* Fixed height for header image */
+    overflow: hidden;
+}
+
+.universe-cover img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover; /* This will crop and center the image */
+    object-position: center;
+}
+
+/* Thumbnail images for cards */
+.card-thumbnail {
+    position: relative;
+    width: 150px;  /* Fixed width */
+    height: 150px; /* Fixed height for square */
+    overflow: hidden;
+    border-radius: 4px;
+    flex-shrink: 0;
+}
+
+.card-thumbnail img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover; /* This will crop to fill the square */
+    object-position: center;
+}
+
+/* Series and Story lists */
+.series-list,
+.stories-list {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+/* Content cards */
+.content-card {
+    display: flex;
+    gap: 20px;
+    background: var(--bg-secondary);
+    padding: 20px;
+    border-radius: 8px;
+    margin-bottom: 15px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .universe-cover {
+        height: 200px; /* Smaller height on mobile */
+    }
+
+    .card-thumbnail {
+        width: 100px;  /* Smaller thumbnails on mobile */
+        height: 100px;
+    }
+}
+
+/* Add these styles to your existing universe.css */
+
+.edit-form {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+    background: var(--bg-secondary);
+    border-radius: 8px;
+    box-shadow: 0 2px 5px var(--shadow);
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    color: var(--text-primary);
+    font-weight: 500;
+}
+
+.form-group input[type="text"],
+.form-group textarea {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    font-size: 16px;
+}
+
+.form-group input[type="text"]:focus,
+.form-group textarea:focus {
+    outline: none;
+    border-color: var(--accent-color);
+    box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+}
+
+.helper-text {
+    margin-top: 5px;
+    font-size: 0.9em;
+    color: var(--text-secondary);
+}
+
+.current-image {
+    margin-bottom: 20px;
+}
+
+.image-preview {
+    width: 100%;
+    max-height: 300px;
+    overflow: hidden;
+    border-radius: 8px;
+    margin-top: 10px;
+}
+
+.image-preview img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.form-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 30px;
+}
+
+.error-message {
+    background: #ff6b6b;
+    color: white;
+    padding: 10px;
+    border-radius: 4px;
+    margin-bottom: 20px;
+} 

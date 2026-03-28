@@ -1,0 +1,155 @@
+{
+  "1": {
+    "inputs": {
+      "image": ""
+    },
+    "class_type": "LoadImage",
+    "_meta": { "title": "Character A" }
+  },
+  "2": {
+    "inputs": {
+      "image": ""
+    },
+    "class_type": "LoadImage",
+    "_meta": { "title": "Character B" }
+  },
+  "3": {
+    "inputs": {
+      "image": ""
+    },
+    "class_type": "LoadImage",
+    "_meta": { "title": "Location" }
+  },
+  "4": {
+    "inputs": {
+      "image": ["1", 0],
+      "channel": "A"
+    },
+    "class_type": "ImageToMask",
+    "_meta": { "title": "Mask A" }
+  },
+  "5": {
+    "inputs": {
+      "destination": ["3", 0],
+      "source": ["1", 0],
+      "mask": ["4", 0],
+      "x": 0,
+      "y": 0,
+      "resize_source": true
+    },
+    "class_type": "ImageCompositeMasked",
+    "_meta": { "title": "Composite A" }
+  },
+  "6": {
+    "inputs": {
+      "image": ["2", 0],
+      "channel": "A"
+    },
+    "class_type": "ImageToMask",
+    "_meta": { "title": "Mask B" }
+  },
+  "7": {
+    "inputs": {
+      "destination": ["5", 0],
+      "source": ["2", 0],
+      "mask": ["6", 0],
+      "x": 0,
+      "y": 0,
+      "resize_source": true
+    },
+    "class_type": "ImageCompositeMasked",
+    "_meta": { "title": "Composite B" }
+  },
+  "8": {
+    "inputs": {
+      "image": ["7", 0],
+      "width": 1280,
+      "height": 1280,
+      "upscale_method": "lanczos",
+      "keep_proportion": true,
+      "crop": "center"
+    },
+    "class_type": "ImageScale",
+    "_meta": { "title": "Resize" }
+  },
+  "9": {
+    "inputs": {
+      "pixels": ["8", 0],
+      "vae": ["16", 0]
+    },
+    "class_type": "VAEEncode",
+    "_meta": { "title": "VAE Encode" }
+  },
+  "10": {
+    "inputs": {
+      "seed": 12345678,
+      "steps": 7,
+      "cfg": 1.0,
+      "sampler_name": "euler",
+      "scheduler": "normal",
+      "denoise": 0.7,
+      "model": ["15", 0],
+      "positive": ["12", 0],
+      "negative": ["13", 0],
+      "latent_image": ["9", 0]
+    },
+    "class_type": "KSampler",
+    "_meta": { "title": "KSampler" }
+  },
+  "11": {
+    "inputs": {
+      "samples": ["10", 0],
+      "vae": ["16", 0]
+    },
+    "class_type": "VAEDecode",
+    "_meta": { "title": "VAE Decode" }
+  },
+  "12": {
+    "inputs": {
+      "text": "",
+      "clip": ["14", 0]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": { "title": "Positive Prompt" }
+  },
+  "13": {
+    "inputs": {
+      "text": "low quality, blurry, disfigured, extra limbs, bad anatomy",
+      "clip": ["14", 0]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": { "title": "Negative Prompt" }
+  },
+  "14": {
+    "inputs": {
+      "clip_name": "qwen_3_4b.safetensors",
+      "type": "lumina2",
+      "device": "default"
+    },
+    "class_type": "CLIPLoader",
+    "_meta": { "title": "Load CLIP" }
+  },
+  "15": {
+    "inputs": {
+      "unet_name": "moodyPornMix_zitV7.safetensors",
+      "weight_dtype": "default"
+    },
+    "class_type": "UNETLoader",
+    "_meta": { "title": "Load Model" }
+  },
+  "16": {
+    "inputs": {
+      "vae_name": "ae.safetensors"
+    },
+    "class_type": "VAELoader",
+    "_meta": { "title": "Load VAE" }
+  },
+  "17": {
+    "inputs": {
+      "filename_prefix": "idea_board/scene",
+      "images": ["11", 0]
+    },
+    "class_type": "SaveImage",
+    "_meta": { "title": "Save Image" }
+  }
+}

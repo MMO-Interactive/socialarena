@@ -1,0 +1,17 @@
+:root {
+    --bg-primary: #1a1a1a;
+    --bg-secondary: #2d2d2d;
+    --bg-nav: #2c3e50;
+    --bg-header: #1a242f;
+    --text-primary: #ffffff;
+    --text-secondary: #cccccc;
+    --text-nav: #8b9baa;
+    --text-header: #ffffff;
+    --border-color: #404040;
+    --accent-color: #3498db;
+    --accent-hover: #2980b9;
+    --shadow: rgba(0,0,0,0.3);
+    --card-bg: #363636;
+    --story-text: #ffffff;
+    --meta-text: #b0b0b0;
+} 

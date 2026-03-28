@@ -1,0 +1,194 @@
+.composer-shell {
+    display: grid;
+    grid-template-columns: minmax(280px, 360px) minmax(0, 1fr);
+    gap: 18px;
+    min-height: 70vh;
+}
+
+.composer-panel {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.composer-header h1 {
+    margin: 0 0 6px;
+}
+
+.composer-header p {
+    margin: 0;
+    color: var(--text-secondary);
+}
+
+.composer-mode {
+    display: flex;
+    gap: 10px;
+}
+
+.composer-mode .btn.active {
+    background: rgba(59, 130, 246, 0.85);
+    color: #fff;
+}
+
+.composer-section label {
+    display: block;
+    margin-bottom: 6px;
+    color: var(--text-secondary);
+    font-size: 0.85em;
+}
+
+.composer-section input,
+.composer-section textarea,
+.composer-section select {
+    width: 100%;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    padding: 8px 10px;
+}
+
+.composer-section textarea {
+    min-height: 70px;
+    resize: vertical;
+}
+
+.composer-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+}
+
+.composer-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 8px;
+}
+
+.composer-workspace {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.workspace-toolbar {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.search-bar input {
+    width: 240px;
+    padding: 8px 10px;
+    border-radius: 999px;
+    border: 1px solid var(--border-color);
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+}
+
+.draft-list {
+    display: grid;
+    gap: 12px;
+}
+
+.draft-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 14px;
+    padding: 14px;
+    display: grid;
+    gap: 10px;
+}
+
+.draft-card.placeholder {
+    text-align: center;
+    color: var(--text-secondary);
+}
+
+.draft-card h3 {
+    margin: 0;
+}
+
+.draft-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    color: var(--text-secondary);
+    font-size: 0.85em;
+}
+
+.draft-prompt {
+    background: rgba(15, 23, 42, 0.6);
+    border-radius: 10px;
+    padding: 10px;
+    color: rgba(226, 232, 240, 0.9);
+    font-size: 0.9em;
+    white-space: pre-wrap;
+}
+
+.draft-actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.composer-player {
+    margin-top: 16px;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    padding: 14px;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    gap: 12px;
+    align-items: center;
+}
+
+.player-info span {
+    display: block;
+    color: var(--text-secondary);
+    font-size: 0.85em;
+}
+
+.player-controls {
+    display: flex;
+    gap: 8px;
+}
+
+.player-progress {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: var(--text-secondary);
+    font-size: 0.85em;
+}
+
+.progress-bar {
+    flex: 1;
+    height: 6px;
+    border-radius: 999px;
+    background: rgba(148, 163, 184, 0.3);
+    overflow: hidden;
+}
+
+.progress-fill {
+    width: 0%;
+    height: 100%;
+    background: #60a5fa;
+}
+
+@media (max-width: 1100px) {
+    .composer-shell {
+        grid-template-columns: 1fr;
+    }
+    .composer-player {
+        grid-template-columns: 1fr;
+        justify-items: stretch;
+    }
+}

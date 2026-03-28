@@ -1,0 +1,140 @@
+{
+  "9": {
+    "inputs": {
+      "filename_prefix": "z-image/Scene1/i",
+      "images": [
+        "40",
+        0
+      ]
+    },
+    "class_type": "SaveImage",
+    "_meta": {
+      "title": "Save Image"
+    }
+  },
+  "39": {
+    "inputs": {
+      "conditioning": [
+        "42",
+        0
+      ]
+    },
+    "class_type": "ConditioningZeroOut",
+    "_meta": {
+      "title": "ConditioningZeroOut"
+    }
+  },
+  "40": {
+    "inputs": {
+      "samples": [
+        "41",
+        0
+      ],
+      "vae": [
+        "44",
+        0
+      ]
+    },
+    "class_type": "VAEDecode",
+    "_meta": {
+      "title": "VAE Decode"
+    }
+  },
+  "41": {
+    "inputs": {
+      "seed": 530612717320613,
+      "steps": 7,
+      "cfg": 1,
+      "sampler_name": "euler",
+      "scheduler": "normal",
+      "denoise": 1,
+      "model": [
+        "47",
+        0
+      ],
+      "positive": [
+        "42",
+        0
+      ],
+      "negative": [
+        "53",
+        0
+      ],
+      "latent_image": [
+        "45",
+        0
+      ]
+    },
+    "class_type": "KSampler",
+    "_meta": {
+      "title": "KSampler"
+    }
+  },
+  "42": {
+    "inputs": {
+      "text": "unicorn",
+      "clip": [
+        "46",
+        0
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "CLIP Text Encode (Prompt)"
+    }
+  },
+  "44": {
+    "inputs": {
+      "vae_name": "ae.safetensors"
+    },
+    "class_type": "VAELoader",
+    "_meta": {
+      "title": "Load VAE"
+    }
+  },
+  "45": {
+    "inputs": {
+      "width": 1280,
+      "height": 1280,
+      "batch_size": 1
+    },
+    "class_type": "EmptySD3LatentImage",
+    "_meta": {
+      "title": "EmptySD3LatentImage"
+    }
+  },
+  "46": {
+    "inputs": {
+      "clip_name": "qwen_3_4b.safetensors",
+      "type": "lumina2",
+      "device": "default"
+    },
+    "class_type": "CLIPLoader",
+    "_meta": {
+      "title": "Load CLIP"
+    }
+  },
+  "47": {
+    "inputs": {
+      "unet_name": "moodyPornMix_zitV7.safetensors",
+      "weight_dtype": "default"
+    },
+    "class_type": "UNETLoader",
+    "_meta": {
+      "title": "Load Diffusion Model"
+    }
+  },
+  "53": {
+    "inputs": {
+      "text": "harsh studio lighting,\noverexposed highlights,\nplastic skin,\nwaxy skin,\nunnatural glow,\nbeauty lighting,\nfashion photography,\nadult facial proportions,\nteenage features,\nheavy makeup,\ncosmetics,\njewelry,\nstylized portrait,\nanime,\nillustration,\ncgi,\nover-sharpened",
+      "clip": [
+        "46",
+        0
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "CLIP Text Encode (Prompt)"
+    }
+  }
+}

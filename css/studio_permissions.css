@@ -1,0 +1,61 @@
+.permissions-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 18px;
+}
+
+.permissions-header p {
+    color: var(--text-secondary);
+    margin-top: 6px;
+}
+
+.permissions-grid {
+    display: grid;
+    gap: 16px;
+}
+
+.permission-card {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 14px;
+    padding: 16px;
+    display: grid;
+    gap: 12px;
+}
+
+.permission-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+}
+
+.permission-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 10px;
+}
+
+.permission-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(15, 23, 42, 0.45);
+    border: 1px solid rgba(148, 163, 184, 0.2);
+    padding: 6px 10px;
+    border-radius: 10px;
+    font-size: 0.85em;
+}
+
+.role-pill {
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-size: 0.8em;
+    background: rgba(59, 130, 246, 0.2);
+    color: #bfdbfe;
+}
+
+.empty-state {
+    color: var(--text-secondary);
+}

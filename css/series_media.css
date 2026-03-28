@@ -1,0 +1,137 @@
+.series-media {
+    margin-bottom: 24px;
+}
+
+.series-media .media-form {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 12px;
+    margin: 12px 0 16px;
+    background: rgba(30, 41, 59, 0.7);
+    padding: 16px;
+    border-radius: 14px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.series-media .form-row {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.series-media .form-row.hidden {
+    display: none;
+}
+.series-media input,
+.series-media select {
+    padding: 8px 10px;
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: rgba(15, 23, 42, 0.7);
+    color: #e2e8f0;
+}
+
+.media-list {
+    display: grid;
+    gap: 12px;
+}
+
+.media-item {
+    display: grid;
+    gap: 6px;
+    padding: 12px;
+    border-radius: 12px;
+    background: rgba(15, 23, 42, 0.7);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.media-item-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+}
+
+.media-item-meta span {
+    color: rgba(226, 232, 240, 0.6);
+    font-size: 0.8em;
+}
+
+.media-item-url {
+    color: rgba(226, 232, 240, 0.7);
+    font-size: 0.85em;
+    word-break: break-all;
+}
+
+.media-empty {
+    color: rgba(226, 232, 240, 0.6);
+    padding: 10px;
+}
+
+
+.media-thumb-preview img {
+    max-width: 180px;
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.media-item-actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.media-status-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 2px 8px;
+    border-radius: 999px;
+    font-size: 0.72em;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    background: rgba(148, 163, 184, 0.2);
+    color: rgba(226, 232, 240, 0.8);
+}
+
+.media-status-pill.released {
+    background: rgba(16, 185, 129, 0.2);
+    color: #34d399;
+}
+
+.media-status-pill.draft {
+    background: rgba(59, 130, 246, 0.2);
+    color: #93c5fd;
+}
+
+.release-modal {
+    max-width: 640px;
+}
+
+.release-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.release-modal textarea {
+    min-height: 120px;
+}
+
+.release-actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 10px;
+}
+
+.release-result {
+    margin-top: 12px;
+    padding: 10px 12px;
+    border-radius: 10px;
+    background: rgba(16, 185, 129, 0.15);
+    border: 1px solid rgba(16, 185, 129, 0.3);
+    color: #bbf7d0;
+    font-size: 0.9em;
+}

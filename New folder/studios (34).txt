@@ -1,0 +1,231 @@
+<?php
+require_once 'includes/db_connect.php';
+require_once 'includes/auth.php';
+require_once 'includes/studio_access.php';
+
+$board_id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
+if ($board_id === 0) {
+    header('Location: idea_boards.php');
+    exit;
+}
+
+$stmt = $pdo->prepare("SELECT * FROM idea_boards WHERE id = ?");
+$stmt->execute([$board_id]);
+$board = $stmt->fetch(PDO::FETCH_ASSOC);
+
+if (!$board) {
+    header('Location: idea_boards.php');
+    exit;
+}
+if ((int)$board['user_id'] !== (int)$_SESSION['user_id']) {
+    $studioId = isset($board['studio_id']) ? (int)$board['studio_id'] : 0;
+    if (!$studioId || !userHasStudioPermission($pdo, $studioId, (int)$_SESSION['user_id'], 'idea_boards')) {
+        header('Location: idea_boards.php');
+        exit;
+    }
+}
+
+$page_title = 'Idea Board - ' . htmlspecialchars($board['title']);
+$additional_css = ['css/idea_boards.css'];
+
+include 'includes/header.php';
+?>
+
+<div class="page-wrapper">
+    <div class="content-wrapper">
+        <?php include 'includes/navigation.php'; ?>
+        <main class="main-content">
+            <div class="board-header">
+                <div class="board-title-block">
+                    <div class="board-header-top">
+                        <div class="board-title-area">
+                            <h1><?php echo htmlspecialchars($board['title']); ?></h1>
+                            <p class="board-description"><?php echo htmlspecialchars($board['description'] ?? ''); ?></p>
+                        </div>
+                        <div class="board-status-area">
+                            <span class="zoom-readout">Zoom: <strong id="zoom-value">100%</strong></span>
+                            <span class="comfy-status" id="comfy-status">
+                                <span class="status-dot"></span>
+                                <span class="status-text">Checking ComfyUI...</span>
+                            </span>
+                            <button class="btn secondary-btn" id="reset-view">Reset View</button>
+                            <button class="btn secondary-btn" id="cancel-link" style="display:none;">Cancel Link</button>
+                        </div>
+                    </div>
+                    <div class="board-actions">
+                        <div class="action-group">
+                            <span class="action-label">Core</span>
+                            <div class="action-row">
+                                <button class="btn" id="add-note">Add Note</button>
+                                <button class="btn" id="add-image">Add Image</button>
+                                <button class="btn" id="add-link">Add Link</button>
+                                <button class="btn" id="add-style">Add Style</button>
+                                <button class="btn" id="add-style-selector">Add Style Selector</button>
+                            </div>
+                        </div>
+                        <div class="action-group">
+                            <span class="action-label">Story</span>
+                            <div class="action-row">
+                                <button class="btn" id="add-character">Add Character</button>
+                                <button class="btn" id="add-location">Add Location</button>
+                                <button class="btn" id="add-scene">Add Scene</button>
+                                <button class="btn" id="add-clip">Add Clip</button>
+                            </div>
+                        </div>
+                        <div class="action-group">
+                            <span class="action-label">Production</span>
+                            <div class="action-row">
+                                <button class="btn" id="add-camera">Add Camera</button>
+                                <button class="btn" id="add-lighting">Add Lighting</button>
+                                <button class="btn" id="add-vfx">Add VFX</button>
+                                <button class="btn" id="add-prop">Add Prop</button>
+                                <button class="btn" id="add-wardrobe">Add Wardrobe</button>
+                                <button class="btn" id="add-audio">Add Audio</button>
+                                <button class="btn" id="add-dialogue">Add Dialogue</button>
+                                <button class="btn" id="add-beat">Add Beat</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div id="link-status" class="link-status" style="display:none;"></div>
+
+            <div class="board-canvas" id="board-canvas" data-board-id="<?php echo (int)$board_id; ?>"></div>
+        </main>
+    </div>
+</div>
+
+<div class="modal" id="item-modal" style="display:none;">
+    <div class="modal-content">
+        <h2 id="item-modal-title">Add Item</h2>
+        <div class="form-group">
+            <label>Title</label>
+            <input type="text" id="item-title" placeholder="Optional title">
+        </div>
+        <div class="form-group" id="item-content-group">
+            <label id="item-content-label">Content</label>
+            <textarea id="item-content" placeholder="Write your note..."></textarea>
+        </div>
+        <div class="form-group" id="item-image-group" style="display:none;">
+            <label>Image URL</label>
+            <input type="text" id="item-image" placeholder="https://...">
+        </div>
+        <div class="form-group" id="item-link-group" style="display:none;">
+            <label>Link URL</label>
+            <input type="text" id="item-link" placeholder="https://...">
+        </div>
+        <div class="form-group" id="item-audio-group" style="display:none;">
+            <label>Upload Audio</label>
+            <input type="file" id="item-audio" accept="audio/*">
+            <small class="help-text">Supported: mp3, wav, ogg.</small>
+        </div>
+        <div class="form-group" id="item-camera-group" style="display:none;">
+            <label>Camera Settings</label>
+            <div class="camera-grid">
+                <select id="camera-shot">
+                    <option value="">Shot Size</option>
+                    <option value="Extreme Close-Up">Extreme Close-Up</option>
+                    <option value="Close-Up">Close-Up</option>
+                    <option value="Medium Close-Up">Medium Close-Up</option>
+                    <option value="Medium Shot">Medium Shot</option>
+                    <option value="Medium Long Shot">Medium Long Shot</option>
+                    <option value="Long Shot">Long Shot</option>
+                    <option value="Wide Shot">Wide Shot</option>
+                    <option value="Extreme Wide">Extreme Wide</option>
+                </select>
+                <select id="camera-angle">
+                    <option value="">Angle</option>
+                    <option value="Eye Level">Eye Level</option>
+                    <option value="Low Angle">Low Angle</option>
+                    <option value="High Angle">High Angle</option>
+                    <option value="Over-the-Shoulder">Over-the-Shoulder</option>
+                    <option value="Bird's Eye">Bird's Eye</option>
+                    <option value="Dutch Angle">Dutch Angle</option>
+                </select>
+                <select id="camera-lens">
+                    <option value="">Lens</option>
+                    <option value="14mm Ultra Wide">14mm Ultra Wide</option>
+                    <option value="24mm Wide">24mm Wide</option>
+                    <option value="35mm">35mm</option>
+                    <option value="50mm">50mm</option>
+                    <option value="85mm Portrait">85mm Portrait</option>
+                    <option value="135mm Tele">135mm Tele</option>
+                </select>
+                <select id="camera-move">
+                    <option value="">Movement</option>
+                    <option value="Static">Static</option>
+                    <option value="Pan">Pan</option>
+                    <option value="Tilt">Tilt</option>
+                    <option value="Dolly In">Dolly In</option>
+                    <option value="Dolly Out">Dolly Out</option>
+                    <option value="Tracking">Tracking</option>
+                    <option value="Handheld">Handheld</option>
+                </select>
+                <select id="camera-framing">
+                    <option value="">Framing</option>
+                    <option value="Centered">Centered</option>
+                    <option value="Rule of Thirds">Rule of Thirds</option>
+                    <option value="Negative Space">Negative Space</option>
+                    <option value="Symmetrical">Symmetrical</option>
+                </select>
+            </div>
+        </div>
+        <div class="form-group" id="item-style-selector-group" style="display:none;">
+            <label>Style Selector</label>
+            <div class="camera-grid">
+                <select id="style-selector-style">
+                    <option value="">Style</option>
+                    <option value="Photoreal">Photoreal</option>
+                    <option value="Cinematic">Cinematic</option>
+                    <option value="Illustration">Illustration</option>
+                    <option value="Anime">Anime</option>
+                    <option value="Concept Art">Concept Art</option>
+                    <option value="Painterly">Painterly</option>
+                </select>
+                <select id="style-selector-medium">
+                    <option value="">Medium</option>
+                    <option value="Digital">Digital</option>
+                    <option value="Oil Paint">Oil Paint</option>
+                    <option value="Watercolor">Watercolor</option>
+                    <option value="3D Render">3D Render</option>
+                    <option value="Sketch">Sketch</option>
+                </select>
+                <select id="style-selector-palette">
+                    <option value="">Palette</option>
+                    <option value="Warm">Warm</option>
+                    <option value="Cool">Cool</option>
+                    <option value="Muted">Muted</option>
+                    <option value="Vibrant">Vibrant</option>
+                    <option value="Monochrome">Monochrome</option>
+                </select>
+                <select id="style-selector-mood">
+                    <option value="">Mood</option>
+                    <option value="Moody">Moody</option>
+                    <option value="Bright">Bright</option>
+                    <option value="Dreamy">Dreamy</option>
+                    <option value="Gritty">Gritty</option>
+                    <option value="Epic">Epic</option>
+                </select>
+            </div>
+        </div>
+        <div class="modal-actions">
+            <button class="btn secondary-btn" id="cancel-item">Cancel</button>
+            <button class="btn primary-btn" id="save-item">Save</button>
+        </div>
+    </div>
+</div>
+
+<div class="modal" id="prompt-modal" style="display:none;">
+    <div class="modal-content">
+        <h2>ComfyUI Prompt Preview</h2>
+        <div class="form-group">
+            <label>Generated Prompt</label>
+            <textarea id="prompt-preview" readonly></textarea>
+        </div>
+        <div class="modal-actions">
+            <button class="btn secondary-btn" id="prompt-close">Close</button>
+        </div>
+    </div>
+</div>
+
+<script src="js/idea_board.js"></script>

@@ -1,0 +1,440 @@
+<?php
+ob_start();
+require_once 'includes/db_connect.php';
+require_once 'includes/studio_access.php';
+if (session_status() !== PHP_SESSION_ACTIVE) {
+    session_start();
+}
+
+
+// Check if user is logged in
+if (!isset($_SESSION['user_id'])) {
+    header('Location: login.php');
+    exit;
+}
+
+// Check if story ID is provided
+if (!isset($_GET['id'])) {
+    header('Location: writing_center.php');
+    exit;
+}
+
+$story_id = (int)$_GET['id'];
+$theme = $_SESSION['theme'] ?? 'light';
+$error = '';
+
+// Get story details
+$stmt = $pdo->prepare("
+    SELECT s.*, u.username as author_name,
+           sr.universe_title, sr.series_title
+    FROM stories s
+    LEFT JOIN users u ON s.created_by = u.id
+    LEFT JOIN (
+        SELECT s.id as story_id,
+               u.title as universe_title,
+               ser.title as series_title
+        FROM stories s
+        LEFT JOIN universes u ON s.universe_id = u.id
+        LEFT JOIN series ser ON s.series_id = ser.id
+    ) sr ON s.id = sr.story_id
+    WHERE s.id = ?
+");
+$stmt->execute([$story_id]);
+$story = $stmt->fetch();
+
+if (!$story) {
+    header('Location: writing_center.php');
+    exit;
+}
+if ((int)$story['created_by'] !== (int)$_SESSION['user_id']) {
+    $studioId = isset($story['studio_id']) ? (int)$story['studio_id'] : 0;
+    if (!$studioId || !userHasStudioPermission($pdo, $studioId, (int)$_SESSION['user_id'], 'stories')) {
+        header('Location: writing_center.php');
+        exit;
+    }
+}
+
+// Get available universes for dropdown
+$universes = [];
+try {
+    [$universeWhere, $universeParams] = buildStudioVisibilityWhere('u', (int)$_SESSION['user_id'], 'universes');
+    $stmt = $pdo->prepare("SELECT u.id, u.title FROM universes u WHERE {$universeWhere} ORDER BY u.title ASC");
+    $stmt->execute($universeParams);
+    $universes = $stmt->fetchAll(PDO::FETCH_ASSOC);
+} catch (Throwable $e) {
+    $stmt = $pdo->prepare("SELECT id, title FROM universes WHERE created_by = ? OR user_id = ? ORDER BY title ASC");
+    $stmt->execute([(int)$_SESSION['user_id'], (int)$_SESSION['user_id']]);
+    $universes = $stmt->fetchAll(PDO::FETCH_ASSOC);
+}
+
+// Get all series for dropdown
+$all_series = [];
+try {
+    [$seriesWhere, $seriesParams] = buildStudioVisibilityWhere('s', (int)$_SESSION['user_id'], 'series');
+    $stmt = $pdo->prepare("SELECT s.id, s.title, s.universe_id FROM series s WHERE {$seriesWhere} ORDER BY s.title ASC");
+    $stmt->execute($seriesParams);
+    $all_series = $stmt->fetchAll(PDO::FETCH_ASSOC);
+} catch (Throwable $e) {
+    $stmt = $pdo->prepare("SELECT s.id, s.title, s.universe_id FROM series s WHERE s.created_by = ? OR s.user_id = ? ORDER BY s.title ASC");
+    $stmt->execute([(int)$_SESSION['user_id'], (int)$_SESSION['user_id']]);
+    $all_series = $stmt->fetchAll(PDO::FETCH_ASSOC);
+}
+
+$studios = [];
+try {
+    $studios = getUserStudios($pdo, (int)$_SESSION['user_id']);
+} catch (Throwable $e) {
+    $studios = [];
+}
+
+// Handle form submission
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    try {
+    $title = trim($_POST['title']);
+    $description = trim($_POST['description']);
+    $genre = $_POST['genre'];
+    $universe_id = !empty($_POST['universe_id']) ? (int)$_POST['universe_id'] : null;
+    $series_id = !empty($_POST['series_id']) ? (int)$_POST['series_id'] : null;
+    $status = $_POST['status'];
+    $studio_id = !empty($_POST['studio_id']) ? (int)$_POST['studio_id'] : null;
+    $visibility = normalizeVisibility($_POST['visibility'] ?? 'private', $studio_id);
+
+    if (!$studio_id && $series_id) {
+        $stmt = $pdo->prepare("SELECT studio_id FROM series WHERE id = ?");
+        $stmt->execute([$series_id]);
+        $studio_id = (int)$stmt->fetchColumn() ?: null;
+        $visibility = normalizeVisibility($visibility, $studio_id);
+    }
+    enforceStudioPermission($pdo, $studio_id, (int)$_SESSION['user_id'], 'stories');
+
+    // Handle image upload
+    $thumbnail_url = $story['thumbnail_url'];
+    if (isset($_FILES['thumbnail']) && $_FILES['thumbnail']['error'] === 0) {
+        $upload_dir = 'uploads/stories/';
+        if (!file_exists($upload_dir)) {
+            mkdir($upload_dir, 0777, true);
+        }
+        
+        $file_extension = strtolower(pathinfo($_FILES['thumbnail']['name'], PATHINFO_EXTENSION));
+        $allowed = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
+        if (!in_array($file_extension, $allowed, true)) {
+            $error = 'Invalid thumbnail type. Allowed: ' . implode(', ', $allowed);
+        }
+        $file_name = uniqid('story_') . '.' . $file_extension;
+        $upload_path = $upload_dir . $file_name;
+        
+        if (empty($error)) {
+            if (move_uploaded_file($_FILES['thumbnail']['tmp_name'], $upload_path)) {
+                // Delete old thumbnail if it exists
+                if ($thumbnail_url && file_exists($thumbnail_url)) {
+                    unlink($thumbnail_url);
+                }
+                $thumbnail_url = $upload_path;
+            } else {
+                $error = 'Failed to upload thumbnail';
+            }
+        }
+    }
+
+    if (empty($error)) {
+    try {
+        $stmt = $pdo->prepare("
+            UPDATE stories 
+            SET title = ?, description = ?, genre = ?, 
+                thumbnail_url = ?, universe_id = ?, series_id = ?,
+                setting = ?, main_character = ?,
+                status = ?,
+                default_style = ?,
+                default_perspective = ?,
+                studio_id = ?, visibility = ?
+            WHERE id = ?
+        ");
+        $stmt->execute([
+            $title, $description, $genre, 
+            $thumbnail_url, $universe_id, $series_id,
+            $_POST['setting'] ?? null,
+            $_POST['main_character'] ?? null,
+            $status,
+            $_POST['default_style'] ?? null,
+            $_POST['default_perspective'] ?? null,
+            $studio_id, $visibility,
+            $story_id
+        ]);
+        
+        header('Location: story.php?id=' . $story_id);
+        exit;
+
+    } catch (Exception $e) {
+        try {
+            $stmt = $pdo->prepare("
+                UPDATE stories 
+                SET title = ?, description = ?, genre = ?, 
+                    thumbnail_url = ?, universe_id = ?, series_id = ?,
+                    setting = ?, main_character = ?,
+                    status = ?, studio_id = ?, visibility = ?
+                WHERE id = ?
+            ");
+            $stmt->execute([
+                $title, $description, $genre, 
+                $thumbnail_url, $universe_id, $series_id,
+                $_POST['setting'] ?? null,
+                $_POST['main_character'] ?? null,
+                $status, $studio_id, $visibility, $story_id
+            ]);
+
+            header('Location: story.php?id=' . $story_id);
+            exit;
+        } catch (Exception $inner) {
+            $error = "Failed to update story: " . $e->getMessage();
+        }
+    }
+    }
+    } catch (Throwable $e) {
+        $error = 'Failed to update story. Please try again.';
+        error_log('Edit story error: ' . $e->getMessage());
+    }
+}
+?>
+
+<!DOCTYPE html>
+<html lang="en" data-theme="<?php echo $theme; ?>">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Story - <?php echo htmlspecialchars($story['title']); ?></title>
+    <link rel="stylesheet" href="css/themes/<?php echo $theme; ?>.css">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/story.css">
+    <link rel="stylesheet" href="css/series_media.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="js/story-suggestions.js" defer></script>
+</head>
+<body>
+    <div class="page-wrapper">
+        <?php include 'includes/header.php'; ?>
+        
+        <div class="content-wrapper">
+            <?php include 'includes/navigation.php'; ?>
+            
+            <main class="main-content">
+                <h1>Edit Story</h1>
+                
+                <?php if (isset($error)): ?>
+                    <div class="error-message"><?php echo $error; ?></div>
+                <?php endif; ?>
+
+                <div class="page-actions">
+                    <a href="story.php?id=<?php echo $story_id; ?>" class="btn">View Story</a>
+                    <a href="story_planner.php?id=<?php echo $story_id; ?>" class="btn">Story Planner</a>
+                </div>
+
+                <form method="POST" enctype="multipart/form-data" class="story-form">
+                    <!-- Universe Selection -->
+                    <?php if (!empty($universes)): ?>
+                    <div class="form-group">
+                        <label for="universe_id">Part of Universe (Optional)</label>
+                        <select name="universe_id" id="universe_id" onchange="updateSeriesList()">
+                            <option value="">Film</option>
+                            <?php foreach ($universes as $universe): ?>
+                                <option value="<?php echo $universe['id']; ?>"
+                                        <?php echo $story['universe_id'] === $universe['id'] ? 'selected' : ''; ?>>
+                                    <?php echo htmlspecialchars($universe['title']); ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                    <?php endif; ?>
+
+                    <!-- Series Selection -->
+                    <div class="form-group" id="series-group">
+                        <label for="series_id">Part of Series (Optional)</label>
+                        <select name="series_id" id="series_id">
+                            <option value="">Select a Series</option>
+                            <?php foreach ($all_series as $series): ?>
+                                <option value="<?php echo $series['id']; ?>"
+                                        data-universe="<?php echo $series['universe_id']; ?>"
+                                        <?php echo $story['series_id'] === $series['id'] ? 'selected' : ''; ?>>
+                                    <?php echo htmlspecialchars($series['title']); ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="studio_id">Studio (Optional)</label>
+                        <select name="studio_id" id="studio_id">
+                            <option value="">Personal</option>
+                            <?php foreach ($studios as $studio): ?>
+                                <option value="<?php echo (int)$studio['id']; ?>" <?php echo (int)($story['studio_id'] ?? 0) === (int)$studio['id'] ? 'selected' : ''; ?>>
+                                    <?php echo htmlspecialchars($studio['name']); ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="visibility">Visibility</label>
+                        <?php $currentVisibility = $story['visibility'] ?? 'private'; ?>
+                        <select name="visibility" id="visibility">
+                            <option value="private" <?php echo $currentVisibility === 'private' ? 'selected' : ''; ?>>Private</option>
+                            <option value="studio" <?php echo $currentVisibility === 'studio' ? 'selected' : ''; ?>>Studio</option>
+                            <option value="public" <?php echo $currentVisibility === 'public' ? 'selected' : ''; ?>>Public</option>
+                        </select>
+                        <div class="helper-text">Studio/Public apply only when a studio is selected.</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="title">Story Title</label>
+                        <div class="input-group">
+                            <input type="text" id="title" name="title" 
+                                   value="<?php echo htmlspecialchars($story['title']); ?>" required>
+                            <button type="button" class="btn suggestion-btn" onclick="getStoryTitleSuggestions()">
+                                <i class="fas fa-robot"></i> Get Title Ideas
+                            </button>
+                        </div>
+                        <div id="title-suggestions" class="suggestions-container"></div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="setting">Setting</label>
+                        <input type="text" id="setting" name="setting" 
+                               value="<?php echo htmlspecialchars($story['setting'] ?? ''); ?>">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="main_character">Main Character</label>
+                        <input type="text" id="main_character" name="main_character" 
+                               value="<?php echo htmlspecialchars($story['main_character'] ?? ''); ?>">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="default_style">Default Style</label>
+                        <input type="text" id="default_style" name="default_style" 
+                               value="<?php echo htmlspecialchars($story['default_style'] ?? ''); ?>"
+                               placeholder="e.g. lyrical, punchy, cinematic">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="default_perspective">Default Perspective</label>
+                        <select id="default_perspective" name="default_perspective">
+                            <?php
+                            $perspectives = [
+                                '' => 'Select perspective',
+                                'First person' => 'First person',
+                                'Second person' => 'Second person',
+                                'Third person limited' => 'Third person limited',
+                                'Third person omniscient' => 'Third person omniscient'
+                            ];
+                            foreach ($perspectives as $value => $label):
+                                $selected = ($story['default_perspective'] ?? '') === $value ? 'selected' : '';
+                            ?>
+                                <option value="<?php echo htmlspecialchars($value); ?>" <?php echo $selected; ?>>
+                                    <?php echo htmlspecialchars($label); ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="genre">Genre</label>
+                        <select id="genre" name="genre" required>
+                            <?php
+                            $genres = ['Fantasy', 'Science Fiction', 'Mystery', 'Horror', 'Adventure', 'Romance'];
+                            foreach ($genres as $genre):
+                            ?>
+                                <option value="<?php echo $genre; ?>"
+                                        <?php echo $story['genre'] === $genre ? 'selected' : ''; ?>>
+                                    <?php echo $genre; ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="status">Status</label>
+                        <select id="status" name="status" required>
+                            <option value="draft" <?php echo $story['status'] === 'draft' ? 'selected' : ''; ?>>Draft</option>
+                            <option value="published" <?php echo $story['status'] === 'published' ? 'selected' : ''; ?>>Published</option>
+                            <option value="archived" <?php echo $story['status'] === 'archived' ? 'selected' : ''; ?>>Archived</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="description">Story Description</label>
+                        <div class="input-group">
+                            <textarea id="description" name="description" required><?php 
+                                echo htmlspecialchars($story['description']); 
+                            ?></textarea>
+                            <button type="button" class="btn suggestion-btn" onclick="getStoryDescriptionSuggestions()">
+                                <i class="fas fa-robot"></i> Get Description Ideas
+                            </button>
+                        </div>
+                        <div id="description-suggestions" class="suggestions-container"></div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Current Thumbnail</label>
+                        <?php if ($story['thumbnail_url']): ?>
+                            <div class="current-thumbnail">
+                                <img src="<?php echo htmlspecialchars($story['thumbnail_url']); ?>" 
+                                     alt="Current thumbnail">
+                            </div>
+                        <?php else: ?>
+                            <p class="no-thumbnail">No thumbnail set</p>
+                        <?php endif; ?>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="thumbnail">New Thumbnail (optional)</label>
+                        <input type="file" id="thumbnail" name="thumbnail" accept="image/*">
+                        <div class="helper-text">Recommended size: 800x600 pixels</div>
+                    </div>
+
+                    <section class="series-media">
+                    <h2>Public Media</h2>
+                    <p class="series-description">Add trailers, clips, and screenshots that will show on the public film page.</p>
+                    <div class="media-form">
+                        <div class="form-row">
+                            <label>Type</label>
+                            <select id="story-media-type">
+                                <option value="trailer">Trailer</option>
+                                <option value="clip">Clip</option>
+                                <option value="screenshot">Screenshot</option>
+                            </select>
+                        </div>
+                        <div class="form-row">
+                            <label>Title</label>
+                            <input type="text" id="story-media-title" placeholder="Official Trailer">
+                        </div>
+                        <div class="form-row">
+                            <label>URL (YouTube or Image URL)</label>
+                            <input type="text" id="story-media-url" placeholder="https://youtube.com/watch?v=...">
+                        </div>
+                        <div class="form-row">
+                            <label>Thumbnail (optional)</label>
+                            <input type="file" id="story-media-thumb" accept="image/*">
+                        </div>
+                        <button class="btn" type="button" id="story-media-add" data-story-id="<?php echo $story_id; ?>">Add Media</button>
+                    </div>
+                    <div class="media-list" id="story-media-list"></div>
+                </section>
+
+                <div class="form-actions">
+                        <button type="submit" class="btn primary-btn">Save Changes</button>
+                        <a href="story.php?id=<?php echo $story_id; ?>" class="btn secondary-btn">Cancel</a>
+                    </div>
+                </form>
+            </main>
+        </div>
+        
+        <?php include 'includes/footer.php'; ?>
+    </div>
+
+    <script>
+    // Store series data for filtering
+    const allSeries = <?php echo json_encode($all_series); ?>;
+    
+    // Initialize series list on page load
+    document.addEventListener('DOMContentLoaded', updateSeriesList);
+    </script>
+<script src="js/story_media.js"></script>
+</body>
+</html> 

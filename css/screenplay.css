@@ -1,0 +1,133 @@
+.screenplay-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 20px;
+}
+
+.screenplay-header h1 {
+    margin: 0 0 6px 0;
+    color: var(--text-primary);
+}
+
+.screenplay-breadcrumbs {
+    margin: 0;
+    color: var(--text-secondary);
+}
+
+.screenplay-actions {
+    display: flex;
+    gap: 12px;
+}
+
+.screenplay-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 300px;
+    gap: 20px;
+}
+
+.screenplay-editor {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 20px;
+    min-height: 520px;
+    max-height: calc(100vh - 260px);
+    overflow-y: auto;
+}
+
+.screenplay-blocks {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.screenplay-block {
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    padding: 12px;
+    background: var(--bg-primary);
+}
+
+.block-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+    color: var(--text-secondary);
+    font-size: 0.85em;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.block-controls {
+    display: flex;
+    gap: 6px;
+}
+
+.block-controls button {
+    border: none;
+    background: transparent;
+    color: var(--text-secondary);
+    cursor: pointer;
+}
+
+.screenplay-block textarea {
+    width: 100%;
+    min-height: 70px;
+    resize: vertical;
+    border: none;
+    background: transparent;
+    color: var(--text-primary);
+    font-size: 1em;
+    line-height: 1.6;
+    outline: none;
+}
+
+.screenplay-block.scene_heading textarea,
+.screenplay-block.transition textarea {
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+
+.screenplay-block.character textarea {
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.screenplay-sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.sidebar-card {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 16px;
+}
+
+.sidebar-card h3 {
+    margin-top: 0;
+    color: var(--text-primary);
+}
+
+.block-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.block-buttons .btn {
+    justify-content: center;
+}
+
+@media (max-width: 960px) {
+    .screenplay-layout {
+        grid-template-columns: 1fr;
+    }
+    .screenplay-editor {
+        max-height: none;
+    }
+}

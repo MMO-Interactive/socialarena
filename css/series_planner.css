@@ -1,0 +1,244 @@
+.series-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-bottom: 20px;
+    color: var(--text-secondary);
+}
+
+.series-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.series-overview {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 20px;
+}
+
+.series-overview h2 {
+    margin-top: 0;
+}
+
+.series-stories .section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.series-cast .section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.cast-controls {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.cast-controls select,
+.cast-controls input {
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    padding: 6px 10px;
+}
+
+.cast-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.cast-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    background: var(--card-bg);
+}
+
+.series-seasons .section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin: 20px 0 10px;
+}
+
+.seasons-list {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.season-card {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    padding: 16px;
+}
+
+.season-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+}
+
+.season-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.season-label {
+    display: inline-block;
+    font-weight: 600;
+    margin-right: 10px;
+}
+
+.season-title {
+    background: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    padding: 6px 10px;
+    color: var(--text-primary);
+    min-width: 220px;
+}
+
+.season-description {
+    color: var(--text-secondary);
+    margin: 10px 0 0;
+}
+
+.episodes-list {
+    margin-top: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.episode-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 12px;
+}
+
+.episode-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.episode-number {
+    font-weight: 600;
+    color: var(--text-secondary);
+}
+
+.episode-title {
+    background: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    padding: 6px 10px;
+    color: var(--text-primary);
+    flex: 1;
+}
+
+.episode-description {
+    margin: 8px 0 0;
+    color: var(--text-secondary);
+}
+
+.episode-story {
+    margin-top: 10px;
+    display: grid;
+    gap: 6px;
+}
+
+.episode-story label {
+    font-size: 0.9em;
+    color: var(--text-secondary);
+}
+
+.episode-story select {
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    padding: 6px 10px;
+}
+
+.empty-state.small {
+    padding: 10px;
+    font-size: 0.9em;
+}
+
+.series-stories .helper-text {
+    color: var(--text-secondary);
+    font-size: 0.9em;
+}
+
+.stories-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.series-story-card {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 14px;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    background: var(--card-bg);
+}
+
+.story-drag {
+    cursor: move;
+    color: var(--text-secondary);
+}
+
+.story-info {
+    flex: 1;
+}
+
+.story-info h3 {
+    margin: 0 0 6px 0;
+    color: var(--text-primary);
+}
+
+.story-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.empty-state {
+    padding: 20px;
+    border: 1px dashed var(--border-color);
+    border-radius: 8px;
+    color: var(--text-secondary);
+    text-align: center;
+}
+
+@media (max-width: 768px) {
+    .series-story-card {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    .story-actions {
+        width: 100%;
+        justify-content: flex-start;
+        flex-wrap: wrap;
+    }
+}
