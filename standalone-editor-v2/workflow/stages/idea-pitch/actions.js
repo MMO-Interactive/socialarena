@@ -12,18 +12,14 @@
     return globalScope.CreatorAppV2ProjectWorkspace.createPitchDraft(draft);
   }
 
-  function applyPitchDraftFromDom(store, appElement) {
+  async function applyPitchDraftFromDom(store, appElement) {
     const currentDraft = globalScope.CreatorAppV2IdeaPitchState.getPitchDraft(store);
     const nextDraft = buildDraftFromInputs(appElement, currentDraft);
     globalScope.CreatorAppV2ProjectWorkspace.updatePitchDraft(store, nextDraft);
     globalScope.CreatorAppV2ProjectWorkspace.applyPitchDraft(store);
-    store.setState((state) => ({
-      ...state,
-      workflow: {
-        ...state.workflow,
-        notice: "Pitch draft applied to the active project context."
-      }
-    }));
+    await globalScope.CreatorAppV2ProjectController.saveWorkspaceTimeline(store, {
+      notice: "Pitch draft applied and saved to project workspace."
+    });
   }
 
   globalScope.CreatorAppV2IdeaPitchActions = {

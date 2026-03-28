@@ -16,19 +16,22 @@
     };
   }
 
-  function applyDraftFromDom(store, appElement) {
+  async function applyDraftFromDom(store, appElement) {
     const nextDraft = buildDraftFromDom(appElement, globalScope.CreatorAppV2ClipGenerationState.getVideoClipsDraft(store));
     globalScope.CreatorAppV2ProjectWorkspace.updateVideoClipsDraft(store, nextDraft);
+    await globalScope.CreatorAppV2ProjectController.saveWorkspaceTimeline(store, {
+      notice: "Clip generation plan applied and saved to project workspace."
+    });
     store.setState((state) => ({
       ...state,
       workflow: {
         ...state.workflow,
-        notice: "Clip generation plan applied."
+        notice: "Clip generation plan applied and saved to project workspace."
       }
     }));
   }
 
-  function selectScene(store, sceneId) {
+  async function selectScene(store, sceneId) {
     globalScope.CreatorAppV2ProjectWorkspace.updateVideoClipsDraft(store, (draft) => {
       const scene = draft.scenes.find((entry) => entry.id === sceneId) || draft.scenes[0] || null;
       return {
@@ -38,15 +41,17 @@
         updatedAt: new Date().toISOString()
       };
     });
+    await globalScope.CreatorAppV2ProjectController.saveWorkspaceTimeline(store);
   }
 
-  function selectRequest(store, sceneId, requestId) {
+  async function selectRequest(store, sceneId, requestId) {
     globalScope.CreatorAppV2ProjectWorkspace.updateVideoClipsDraft(store, (draft) => ({
       ...draft,
       selectedSceneId: sceneId,
       selectedRequestId: requestId,
       updatedAt: new Date().toISOString()
     }));
+    await globalScope.CreatorAppV2ProjectController.saveWorkspaceTimeline(store);
   }
 
   async function generateForRequest(store, appElement, sceneId, requestId) {
@@ -86,11 +91,14 @@
         }
       );
       globalScope.CreatorAppV2ProjectWorkspace.applyVideoClipPayload(store, sceneId, requestId, payload?.video_clip || payload?.starting_image || {});
+      await globalScope.CreatorAppV2ProjectController.saveWorkspaceTimeline(store, {
+        notice: `Queued clip generation for ${scene.title} / ${request.title} and saved project workspace.`
+      });
       store.setState((currentState) => ({
         ...currentState,
         workflow: {
           ...currentState.workflow,
-          notice: `Queued clip generation for ${scene.title} / ${request.title}.`
+          notice: `Queued clip generation for ${scene.title} / ${request.title} and saved project workspace.`
         }
       }));
     } catch (error) {
@@ -120,13 +128,18 @@
         }
       );
       globalScope.CreatorAppV2ProjectWorkspace.applyVideoClipPayload(store, sceneId, requestId, payload?.video_clip || payload?.starting_image || {});
+      await globalScope.CreatorAppV2ProjectController.saveWorkspaceTimeline(store, {
+        notice: payload?.video_clip?.generated_video_url || payload?.starting_image?.generated_video_url
+          ? `Clip ready for ${scene.title} / ${request.title} and saved to project workspace.`
+          : `Refreshed clip generation status for ${scene.title} / ${request.title} and saved project workspace.`
+      });
       store.setState((currentState) => ({
         ...currentState,
         workflow: {
           ...currentState.workflow,
           notice: payload?.video_clip?.generated_video_url || payload?.starting_image?.generated_video_url
-            ? `Clip ready for ${scene.title} / ${request.title}.`
-            : `Refreshed clip generation status for ${scene.title} / ${request.title}.`
+            ? `Clip ready for ${scene.title} / ${request.title} and saved to project workspace.`
+            : `Refreshed clip generation status for ${scene.title} / ${request.title} and saved project workspace.`
         }
       }));
     } catch (error) {
@@ -134,7 +147,7 @@
     }
   }
 
-  function approveGeneratedClip(store, sceneId, requestId, clipId) {
+  async function approveGeneratedClip(store, sceneId, requestId, clipId) {
     globalScope.CreatorAppV2ProjectWorkspace.updateVideoClipsDraft(store, (draft) => ({
       ...draft,
       scenes: draft.scenes.map((scene) => ({
@@ -151,11 +164,14 @@
       })),
       updatedAt: new Date().toISOString()
     }));
+    await globalScope.CreatorAppV2ProjectController.saveWorkspaceTimeline(store, {
+      notice: "Preferred generated clip selected and saved to project workspace."
+    });
     store.setState((state) => ({
       ...state,
       workflow: {
         ...state.workflow,
-        notice: "Preferred generated clip selected."
+        notice: "Preferred generated clip selected and saved to project workspace."
       }
     }));
   }

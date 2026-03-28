@@ -61,6 +61,11 @@
       })
     );
 
+    const changedAssets = resolved.filter((entry) => entry.durationResolved && entry.durationSeconds > 0);
+    if (changedAssets.length) {
+      await saveWorkspaceTimeline(store);
+    }
+
     return resolved;
   }
 
@@ -93,17 +98,23 @@
     globalScope.CreatorAppV2ProjectWorkspace.setProjectWorkspaceLoading(store, true);
     try {
       const summary = globalScope.CreatorAppV2ProjectWorkspace.normalizeProjectSummary(projectSummary);
-      const [projectPayload, ideaBoardPayload] = await Promise.all([
+      const [projectPayload, ideaBoardPayload, timelinePayload] = await Promise.all([
         endpoints.projects.getProject(session.token, session.studioId, summary.type, summary.id),
-        endpoints.projects.getIdeaBoard(session.token, session.studioId, summary.type, summary.id)
+        endpoints.projects.getIdeaBoard(session.token, session.studioId, summary.type, summary.id),
+        endpoints.projects.getTimeline(session.token, session.studioId, summary.type, summary.id)
       ]);
 
       const normalizedBoard = globalScope.CreatorAppV2ProjectWorkspace.normalizeApiIdeaBoard(ideaBoardPayload?.idea_board || null);
       globalScope.CreatorAppV2ProjectWorkspace.setActiveProject(store, {
         summary,
         project: projectPayload?.project || projectSummary,
-        ideaBoard: normalizedBoard
+        ideaBoard: normalizedBoard,
+        timelineProject: timelinePayload?.timeline_project || null
       });
+
+      const restoredStageId = globalScope.CreatorAppV2Workflow.getStageById(
+        store.getState().projectWorkspace?.workflowStageId || "idea_board"
+      ).id;
 
       store.setState((currentState) => ({
         ...currentState,
@@ -113,14 +124,30 @@
         },
         workflow: {
           ...currentState.workflow,
-          currentStageId: "idea_board",
+          currentStageId: restoredStageId,
           stages: currentState.workflow.stages.map((stage) => ({
             ...stage,
-            status: stage.id === "idea_board" ? "active" : "ready"
+            status: stage.id === restoredStageId ? "active" : "ready"
           })),
-          notice: `Opened ${summary.title} in the creator workflow.`
+          notice: `Opened ${summary.title} in the creator workflow at ${globalScope.CreatorAppV2Workflow.getStageById(restoredStageId).label}.`
         }
       }));
+
+      if (restoredStageId === "edit") {
+        await hydrateImportedAssetMetadata(store);
+        const editDraft = globalScope.CreatorAppV2EditState.getEditDraft(store);
+        const hasApprovedSelections = globalScope.CreatorAppV2ClipGenerationState.getVideoClipsDraft(store).scenes.some((scene) =>
+          scene.clips.some((clip) => Boolean(clip.approvedClipId || clip.generatedClips[0]))
+        );
+        if (!editDraft.timelineItems.length && hasApprovedSelections) {
+          globalScope.CreatorAppV2EditActions.buildRoughCut(store);
+          await saveWorkspaceTimeline(store, {
+            notice: `Opened ${summary.title} in Edit and rebuilt the rough cut from approved takes.`
+          });
+        }
+      } else if (restoredStageId === "export_release") {
+        await globalScope.CreatorAppV2ExportReleaseActions.refreshExports(store);
+      }
 
       return summary;
     } catch (error) {
@@ -179,6 +206,46 @@
       return payload;
     } catch (error) {
       globalScope.CreatorAppV2ProjectWorkspace.setIdeaBoardError(store, error.message || "Failed to save idea board.");
+      return null;
+    }
+  }
+
+  async function saveWorkspaceTimeline(store, options = {}) {
+    const state = store.getState();
+    const { session, endpoints, projectWorkspace } = state;
+    const activeProject = projectWorkspace?.activeProject;
+    if (!activeProject || session.status !== "studio_ready") {
+      return null;
+    }
+
+    try {
+      const existingTimeline = projectWorkspace?.timelineProject?.timeline_json || {};
+      const payload = await endpoints.projects.saveTimeline(
+        session.token,
+        session.studioId,
+        activeProject.type,
+        activeProject.id,
+        {
+          name: `${activeProject.title || "Untitled Project"} Workspace`,
+          timeline_json: {
+            ...existingTimeline,
+            v2_workspace: globalScope.CreatorAppV2ProjectWorkspace.serializeWorkspace(projectWorkspace)
+          }
+        }
+      );
+      globalScope.CreatorAppV2ProjectWorkspace.setTimelineProjectSaved(store, payload);
+      if (options.notice) {
+        store.setState((currentState) => ({
+          ...currentState,
+          workflow: {
+            ...currentState.workflow,
+            notice: options.notice
+          }
+        }));
+      }
+      return payload;
+    } catch (error) {
+      globalScope.CreatorAppV2ProjectWorkspace.setProjectWorkspaceError(store, error.message || "Failed to save project workspace.");
       return null;
     }
   }
@@ -249,6 +316,7 @@
     openProject,
     createProject,
     saveIdeaBoard,
+    saveWorkspaceTimeline,
     addIdeaCard,
     importAssets,
     hydrateImportedAssetMetadata
