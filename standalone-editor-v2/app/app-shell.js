@@ -40,7 +40,7 @@
     return `
       <div class="v2-workflow-stage-nav">
         ${workflow.stages.map((stage) => `
-          <button class="v2-workflow-stage-pill ${stage.id === currentStageId ? "active" : ""}" type="button" data-stage-id="${stage.id}">
+          <button class="v2-workflow-stage-pill ${stage.id === currentStageId ? "active" : ""}" type="button" data-stage-id="${stage.id}" aria-current="${stage.id === currentStageId ? "step" : "false"}" aria-label="Step ${stage.stepNumber}: ${stage.label}">
             <span>Step ${stage.stepNumber}</span>
             <strong>${stage.label}</strong>
           </button>
@@ -53,7 +53,7 @@
     return `
       <div class="v2-stage-list">
         ${workflow.stages.map((stage) => `
-          <${interactive ? "button" : "div"} class="v2-stage-button ${stage.id === currentStageId ? "active" : ""}" ${interactive ? `type="button" data-stage-id="${stage.id}"` : ""}>
+          <${interactive ? "button" : "div"} class="v2-stage-button ${stage.id === currentStageId ? "active" : ""}" ${interactive ? `type="button" data-stage-id="${stage.id}" aria-current="${stage.id === currentStageId ? "step" : "false"}" aria-label="Step ${stage.stepNumber}: ${stage.label}"` : ""}>
             <span class="v2-stage-signal"></span>
             <span class="v2-stage-index">Step ${stage.stepNumber}</span>
             <span class="v2-stage-label">${stage.label}</span>
@@ -61,6 +61,69 @@
           </${interactive ? "button" : "div"}>
         `).join("")}
       </div>
+    `;
+  }
+
+  function getWorkflowSignals(workflow) {
+    const stages = Array.isArray(workflow?.stages) ? workflow.stages : [];
+    const total = stages.length || 1;
+    const activeCount = stages.filter((stage) => stage.status === "active").length;
+    const readyCount = stages.filter((stage) => stage.status === "ready").length;
+    const lockedCount = stages.filter((stage) => stage.status === "locked").length;
+    const progressCount = stages.filter((stage) => stage.status === "ready" || stage.status === "active").length;
+    const readinessPercent = Math.round((progressCount / total) * 100);
+    const riskLevel = lockedCount >= 4 ? "High" : lockedCount >= 2 ? "Medium" : "Low";
+    return {
+      total,
+      activeCount,
+      readyCount,
+      lockedCount,
+      readinessPercent,
+      blockerCount: lockedCount,
+      riskLevel
+    };
+  }
+
+  function getNextBestAction(workflow) {
+    const stages = Array.isArray(workflow?.stages) ? workflow.stages : [];
+    const firstLocked = stages.find((stage) => stage.status === "locked");
+    if (firstLocked) {
+      return {
+        title: `Unlock ${firstLocked.label}`,
+        caption: "Resolve blockers and move this stage into active production.",
+        stageId: firstLocked.id
+      };
+    }
+
+    return {
+      title: "Continue active stage",
+      caption: "Open the current stage and progress production.",
+      stageId: workflow?.currentStageId || "idea_board"
+    };
+  }
+
+  function renderMissionControlStrip(workflow) {
+    const signals = getWorkflowSignals(workflow);
+    const nextAction = getNextBestAction(workflow);
+    return `
+      <section class="v2-mission-strip" aria-label="Mission control">
+        <article class="v2-mission-card">
+          <span>Pipeline Readiness</span>
+          <strong>${signals.readinessPercent}%</strong>
+          <p>${signals.readyCount} ready · ${signals.activeCount} active · ${signals.lockedCount} locked</p>
+        </article>
+        <article class="v2-mission-card">
+          <span>Production Risk</span>
+          <strong>${signals.riskLevel}</strong>
+          <p>${signals.blockerCount} blocker${signals.blockerCount === 1 ? "" : "s"} across the rail.</p>
+        </article>
+        <article class="v2-mission-card v2-mission-card-action">
+          <span>Next Best Action</span>
+          <strong>${nextAction.title}</strong>
+          <p>${nextAction.caption}</p>
+          <button class="v2-button" type="button" data-stage-id="${nextAction.stageId}">Open Stage</button>
+        </article>
+      </section>
     `;
   }
 
@@ -115,6 +178,7 @@
               </div>
             </div>
             <div class="v2-stage-body">
+              ${renderMissionControlStrip(workflow)}
               <div class="v2-card-grid v2-card-grid-dashboard">
                 <article class="v2-card v2-feature-card">
                   <div class="v2-card-eyebrow">Active Container</div>
@@ -385,6 +449,7 @@
 
         <div class="v2-foundation v2-foundation-workflow">
           <main class="v2-stage-panel v2-stage-panel-workflow v2-stage-panel-workflow-full">
+            ${renderMissionControlStrip(workflow)}
             ${renderWorkflowStageNav(workflow, workflow.currentStageId)}
             ${renderStageBody(activeStage, state)}
             <footer class="v2-stage-footer">

@@ -61,3 +61,150 @@
         padding: 16px 20px;
     }
 }
+
+@media (max-width: 768px) {
+    .public-header {
+        position: sticky;
+        top: 0;
+        padding: 12px 14px;
+        gap: 10px;
+    }
+
+    .public-brand {
+        width: 100%;
+    }
+
+    .public-brand .brand-title {
+        font-size: 1.05em;
+    }
+
+    .public-brand .brand-subtitle {
+        font-size: 0.62em;
+        letter-spacing: 0.16em;
+    }
+
+    .public-nav {
+        width: 100%;
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        padding-bottom: 4px;
+        gap: 10px;
+    }
+
+    .public-nav a,
+    .public-nav .nav-status {
+        white-space: nowrap;
+    }
+
+    .public-nav .btn {
+        padding: 7px 12px;
+    }
+
+    .discover-hero,
+    .discover-row,
+    .home-page .hero,
+    .home-page .pipeline,
+    .home-page .toolkit,
+    .home-page .latest-wrap,
+    .home-page .community,
+    .home-page .cta,
+    .news-article,
+    .public-series-wrapper .content-wrapper,
+    .public-studio-wrapper .content-wrapper {
+        padding-left: 14px;
+        padding-right: 14px;
+    }
+
+    .hero,
+    .discover-hero {
+        grid-template-columns: 1fr;
+        gap: 18px;
+        padding-top: 22px;
+    }
+
+    .hero-copy h1,
+    .hero-content h1,
+    .series-hero-content h1 {
+        font-size: clamp(1.55rem, 7vw, 2rem);
+    }
+
+    .hero-actions,
+    .discover-row .row-header,
+    .series-meta,
+    .news-meta {
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .hero-stats,
+    .pipeline-grid,
+    .tool-grid,
+    .story-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .media-row,
+    .public-media-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+    }
+
+    .media-card,
+    .public-media-card,
+    .studio-card,
+    .story-tile,
+    .season-card {
+        border-radius: 12px;
+    }
+
+    .studio-public-header,
+    .studio-public-identity {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .studio-public-logo {
+        width: 68px;
+        height: 68px;
+    }
+
+    .studio-public-header h1 {
+        font-size: 1.55em;
+    }
+
+    .series-hero-content,
+    .news-body,
+    .news-missing {
+        padding: 16px;
+    }
+
+    .episode-item {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .episode-thumb {
+        width: 100%;
+        height: 160px;
+    }
+}
+
+@media (max-width: 520px) {
+    .media-row,
+    .public-media-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .news-hero {
+        border-radius: 14px;
+    }
+
+    .news-hero img {
+        height: 200px;
+    }
+
+    .news-hero-content {
+        padding: 14px;
+    }
+}

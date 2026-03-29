@@ -217,6 +217,24 @@ button {
   transition: 140ms ease;
 }
 
+.v2-button:focus-visible,
+.v2-button-ghost:focus-visible,
+.v2-toolbar-button:focus-visible,
+.v2-button-inline:focus-visible,
+.v2-stage-button:focus-visible,
+.v2-workflow-stage-pill:focus-visible,
+.v2-starting-scene-tab:focus-visible,
+.v2-studio-button:focus-visible,
+.v2-edit-project-item:focus-visible,
+.v2-edit-bin-item:focus-visible,
+.v2-edit-scene-segment:focus-visible,
+.v2-edit-sequence-clip:focus-visible,
+.v2-export-row:focus-visible {
+  outline: none;
+  border-color: var(--line-strong);
+  box-shadow: 0 0 0 3px rgba(255, 123, 34, 0.18);
+}
+
 .v2-button {
   background: linear-gradient(180deg, #ff954b, #ff7518);
   color: #fff;
@@ -305,6 +323,14 @@ button {
     rgba(255, 255, 255, 0.025);
   color: var(--text);
   position: relative;
+  transition: 140ms ease;
+}
+
+.v2-stage-button:hover {
+  border-color: rgba(255, 123, 34, 0.26);
+  background:
+    linear-gradient(90deg, rgba(255, 123, 34, 0.13), transparent 30%),
+    rgba(255, 255, 255, 0.03);
 }
 
 .v2-stage-button.active {
@@ -375,6 +401,12 @@ button {
   background: rgba(255, 255, 255, 0.025);
   color: var(--text);
   text-align: left;
+  transition: 140ms ease;
+}
+
+.v2-workflow-stage-pill:hover {
+  border-color: rgba(255, 123, 34, 0.24);
+  background: rgba(255, 123, 34, 0.08);
 }
 
 .v2-workflow-stage-pill span {
@@ -447,6 +479,48 @@ button {
 .v2-stage-body {
   display: grid;
   gap: 16px;
+}
+
+.v2-mission-strip {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.v2-mission-card {
+  display: grid;
+  gap: 8px;
+  padding: 16px;
+  border-radius: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background:
+    linear-gradient(150deg, rgba(123, 231, 255, 0.08), rgba(255, 123, 34, 0.06)),
+    rgba(255, 255, 255, 0.03);
+}
+
+.v2-mission-card span {
+  color: var(--accent-hot);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.v2-mission-card strong {
+  font-size: 28px;
+  line-height: 1;
+  letter-spacing: -0.03em;
+}
+
+.v2-mission-card p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.4;
+}
+
+.v2-mission-card-action .v2-button {
+  width: 100%;
+  margin-top: 4px;
 }
 
 .v2-card-grid {
@@ -730,6 +804,12 @@ button {
   border: 1px solid rgba(255, 255, 255, 0.08);
   background: rgba(255, 255, 255, 0.025);
   color: var(--text);
+  transition: 140ms ease;
+}
+
+.v2-starting-scene-tab:hover {
+  border-color: rgba(255, 123, 34, 0.24);
+  background: rgba(255, 123, 34, 0.08);
 }
 
 .v2-starting-scene-tab.active {
@@ -1286,6 +1366,12 @@ button {
   color: var(--text);
   text-align: left;
   cursor: pointer;
+  transition: 140ms ease;
+}
+
+.v2-edit-scene-segment:hover {
+  border-color: rgba(255, 123, 34, 0.24);
+  background: rgba(255, 123, 34, 0.08);
 }
 
 .v2-edit-scene-segment.covered {
@@ -1494,6 +1580,14 @@ button {
   color: var(--text);
   text-align: left;
   overflow: hidden;
+  transition: 140ms ease;
+}
+
+.v2-edit-sequence-clip:hover {
+  border-color: rgba(255, 123, 34, 0.24);
+  background:
+    linear-gradient(180deg, rgba(255, 123, 34, 0.1), transparent 28%),
+    rgba(255, 255, 255, 0.04);
 }
 
 .v2-edit-sequence-clip.active {
@@ -1604,6 +1698,7 @@ button {
     linear-gradient(90deg, rgba(123, 231, 255, 0.05), transparent 30%),
     rgba(255, 255, 255, 0.025);
   color: var(--text);
+  transition: 140ms ease;
 }
 
 .v2-studio-button:hover {
@@ -1648,6 +1743,19 @@ button {
   background: rgba(255, 111, 135, 0.08);
 }
 
+@media (prefers-reduced-motion: reduce) {
+  .v2-button,
+  .v2-button-ghost,
+  .v2-stage-button,
+  .v2-workflow-stage-pill,
+  .v2-starting-scene-tab,
+  .v2-edit-scene-segment,
+  .v2-edit-sequence-clip,
+  .v2-studio-button {
+    transition: none;
+  }
+}
+
 @media (max-width: 1280px) {
   .v2-app-topbar,
   .v2-foundation {
@@ -1656,6 +1764,10 @@ button {
 
   .v2-card-grid-metrics {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .v2-mission-strip {
+    grid-template-columns: 1fr;
   }
 
   .v2-board-grid {
@@ -1708,6 +1820,11 @@ button {
 
   .v2-app-actions {
     justify-content: flex-start;
+    width: 100%;
+  }
+
+  .v2-app-actions .v2-toolbar-button {
+    width: 100%;
   }
 
   .v2-edit-track-shell,
@@ -1717,5 +1834,14 @@ button {
 
   .v2-edit-track-label {
     min-height: 56px;
+  }
+
+  .v2-workflow-stage-nav {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .v2-workflow-stage-pill {
+    width: 100%;
   }
 }
