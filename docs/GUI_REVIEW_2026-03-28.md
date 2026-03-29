@@ -127,3 +127,151 @@ Explicitly excluded:
 ## Bottom Line
 
 Creator App **V2** is the right foundation and already demonstrates strong visual/system thinking. The highest-impact next step is to harden **accessibility + readiness guidance + deep stage interactions** so the workflow is not only beautiful and coherent, but fast and dependable under real production use.
+
+---
+
+## What “Future of Film + Series Creation” Should Feel Like (Design Direction)
+
+If the goal is for users to immediately feel “this is the future,” V2 should optimize for five product signals:
+
+1. **Cinematic command surface** (not generic SaaS dashboards)
+2. **AI co-director workflow** (guidance is contextual, not chat-in-a-corner)
+3. **Live production intelligence** (risk/readiness visible in real time)
+4. **Direct-manipulation editing** (timeline interaction feels tactile and fast)
+5. **Trust + control** (creative intent never feels overwritten by automation)
+
+---
+
+## Modernization Blueprint (Priority Roadmap)
+
+### P0 — Turn the shell into a true “Mission Control”
+
+#### UX upgrades
+- Replace static stage labels with a **live readiness rail**:
+  - each stage shows `% ready`, blockers count, and estimated time to completion.
+- Add a persistent **Production HUD** at top level:
+  - continuity risk, budget variance, unresolved scene slots, export readiness.
+- Add a single **“Next Best Action”** command area:
+  - one primary action generated from state (e.g., “Generate missing shot for Scene 12”).
+
+#### Why it feels futuristic
+- The interface feels predictive and operational, not merely navigational.
+
+---
+
+### P0 — Make AI feel embedded in every stage (Co-Director Mode)
+
+#### UX upgrades
+- Add per-stage **AI copilots** with role identity:
+  - Story Architect (Idea/Pitch), Script Supervisor (Script), Shot Designer (Images/Clip), Edit Producer (Edit/Release).
+- Convert advice into **one-click executable actions**:
+  - “Fix pacing gap in Scene 8” -> auto-create shot options + insert recommendations.
+- Add **intent locks**:
+  - user can pin tone, character rules, visual motifs so generation respects creative boundaries.
+
+#### Why it feels futuristic
+- AI is no longer a detached tool; it behaves like specialized production collaborators.
+
+---
+
+### P1 — Rebuild Edit stage as a premium direct-manipulation timeline
+
+#### UX upgrades
+- Drag-to-reorder, drag-to-track, drag-to-trim handles with snap guides.
+- Magnetic timeline with semantic anchors:
+  - beat markers, dialogue landmarks, emotion curve overlays.
+- Multi-clip operations:
+  - ripple edits, batch retime, continuity-safe replace, smart extend/shorten.
+- “What changed” overlays after AI-assisted edit operations.
+
+#### Why it feels futuristic
+- Users experience speed and precision associated with pro editing systems, plus AI augmentation.
+
+---
+
+### P1 — Introduce Story Intelligence layers (beyond static forms)
+
+#### UX upgrades
+- Scene cards display **narrative telemetry**:
+  - tension curve, character presence balance, pacing warnings, unresolved arcs.
+- Visual continuity graph:
+  - wardrobe/prop/location consistency with conflict alerts.
+- Cross-episode / cross-series memory:
+  - codex-linked constraints enforced during generation and edit.
+
+#### Why it feels futuristic
+- The product demonstrates understanding of story structure, not just media file management.
+
+---
+
+### P1 — Upgrade visual language from “nice dark UI” to “cinematic instrument panel”
+
+#### UX upgrades
+- Add depth system:
+  - stronger spatial layering, glass/acrylic surfaces, meaningful motion hierarchy.
+- Use semantic color channels:
+  - creative progress, risk, lock status, review status, release confidence.
+- Introduce signature visual primitives:
+  - scene energy bars, generation confidence ribbons, release readiness meter.
+
+#### Why it feels futuristic
+- The interface has a recognizable visual identity that signals a next-gen creator platform.
+
+---
+
+### P2 — Collaboration and review that feels like a virtual studio floor
+
+#### UX upgrades
+- Presence indicators by stage/scene (“who is editing what right now”).
+- Frame-accurate comments pinned to timecode and shot regions.
+- Approval workflows:
+  - producer sign-off gates before export/release.
+- Review playback mode:
+  - one-screen “dailies” flow for rapid accept/reject/regenerate cycles.
+
+#### Why it feels futuristic
+- Moves from solo tooling to studio-grade collaborative production experience.
+
+---
+
+## UI Patterns to Add Immediately
+
+1. **Command Palette (`Cmd/Ctrl+K`)**
+   - global actions, stage jumps, quick generation, search entities, run macros.
+2. **Context Drawer**
+   - right-side adaptive inspector with “why this suggestion,” provenance, and dependencies.
+3. **Readiness Badges + Blocker Chips**
+   - explicit reasons a stage cannot advance; click to resolve.
+4. **Generation Provenance**
+   - every clip/image shows prompt lineage, model, seed, and decision trail.
+5. **Confidence/Cost/Time Triad**
+   - each action previews expected quality confidence, cost impact, and runtime.
+
+---
+
+## Non-Negotiable Product Standards for “Future” Perception
+
+- **Every major action is reversible** (safe experimentation).
+- **Every AI output is explainable** (provenance + rationale).
+- **Every stage communicates readiness** (no hidden blockers).
+- **Every core workflow is keyboard-complete** (speed for power users).
+- **Every visual layer is tokenized** (consistent, scalable design system).
+
+---
+
+## Suggested 90-Day Delivery Sequence
+
+### Days 1–30
+- Mission Control HUD + readiness rail v1
+- Command palette + Next Best Action module
+- Focus-visible and keyboard completeness pass across all core flows
+
+### Days 31–60
+- Edit direct-manipulation baseline (drag reorder/track, trim handles, snap guides)
+- AI co-director actions in Script + Clip stages
+- Blocker chips and preflight gates before export
+
+### Days 61–90
+- Story intelligence overlays (pacing/continuity/arc warnings)
+- Review mode + approval gates
+- Signature cinematic telemetry components (confidence, risk, readiness)
