@@ -167,6 +167,119 @@ function api_route_segments(): array
     return array_values(array_filter(explode('/', trim($uriPath, '/')), 'strlen'));
 }
 
+
+function api_editor_asset_sync_base_dir(): string
+{
+    $baseDir = dirname(__DIR__, 2) . '/uploads/editor_asset_sync';
+    if (!is_dir($baseDir) && !mkdir($baseDir, 0775, true) && !is_dir($baseDir)) {
+        api_error('ASSET_SYNC_UNAVAILABLE', 'Could not initialize the asset sync directory.', 500);
+    }
+
+    return $baseDir;
+}
+
+function api_editor_asset_sync_namespace(int $userId, ?int $studioId): string
+{
+    if ($studioId !== null && $studioId > 0) {
+        return 'studio_' . $studioId;
+    }
+
+    return 'user_' . $userId;
+}
+
+function api_editor_asset_sync_namespace_dir(string $namespace): string
+{
+    $safeNamespace = preg_replace('/[^A-Za-z0-9_-]/', '_', $namespace) ?: 'default';
+    $dir = api_editor_asset_sync_base_dir() . '/' . $safeNamespace;
+    if (!is_dir($dir) && !mkdir($dir, 0775, true) && !is_dir($dir)) {
+        api_error('ASSET_SYNC_UNAVAILABLE', 'Could not initialize the asset namespace directory.', 500);
+    }
+
+    return $dir;
+}
+
+function api_editor_asset_sync_manifest_path(string $namespace): string
+{
+    return api_editor_asset_sync_namespace_dir($namespace) . '/manifest.json';
+}
+
+function api_editor_asset_sync_load_manifest(string $namespace): array
+{
+    $path = api_editor_asset_sync_manifest_path($namespace);
+    if (!is_file($path)) {
+        return [];
+    }
+
+    $raw = file_get_contents($path);
+    if ($raw === false || trim($raw) === '') {
+        return [];
+    }
+
+    $decoded = json_decode($raw, true);
+    if (!is_array($decoded)) {
+        return [];
+    }
+
+    return array_values(array_filter($decoded, static fn ($row): bool => is_array($row)));
+}
+
+function api_editor_asset_sync_write_manifest(string $namespace, array $manifest): void
+{
+    $path = api_editor_asset_sync_manifest_path($namespace);
+    $encoded = json_encode(array_values($manifest), JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
+    if ($encoded === false || file_put_contents($path, $encoded, LOCK_EX) === false) {
+        api_error('ASSET_SYNC_UNAVAILABLE', 'Could not update asset sync manifest.', 500);
+    }
+}
+
+function api_editor_asset_sync_asset_key(string $filename): string
+{
+    $key = strtolower(pathinfo($filename, PATHINFO_FILENAME));
+    $key = preg_replace('/[^a-z0-9._-]+/', '-', $key) ?: 'asset';
+    return trim($key, '-_.') ?: 'asset';
+}
+
+function api_editor_asset_sync_relative_path(string $namespace, string $assetKey, string $extension): string
+{
+    $safeExtension = strtolower(preg_replace('/[^a-z0-9]+/', '', $extension) ?: 'bin');
+    return $namespace . '/' . $assetKey . '.' . $safeExtension;
+}
+
+function api_editor_asset_sync_public_url(string $relativePath): string
+{
+    return 'uploads/editor_asset_sync/' . ltrim(str_replace('\\', '/', $relativePath), '/');
+}
+
+function api_editor_asset_sync_allowed_extensions(): array
+{
+    return [
+        'jpg', 'jpeg', 'png', 'gif', 'webp',
+        'mp3', 'wav', 'ogg', 'm4a', 'aac', 'flac',
+        'mp4', 'mov', 'webm', 'mkv',
+    ];
+}
+
+function api_editor_asset_sync_max_bytes(): int
+{
+    return 1024 * 1024 * 1024; // 1GB
+}
+
+function api_editor_asset_sync_find_index(array $manifest, string $assetKey): int
+{
+    foreach ($manifest as $index => $row) {
+        if (($row['asset_key'] ?? '') === $assetKey) {
+            return (int) $index;
+        }
+    }
+
+    return -1;
+}
+
+function api_editor_asset_sync_sort_manifest(array &$manifest): void
+{
+    usort($manifest, static fn (array $a, array $b): int => strcmp((string) ($b['updated_at'] ?? ''), (string) ($a['updated_at'] ?? '')));
+}
+
 function api_session_expiry_iso(): string
 {
     $ttl = (int) ini_get('session.gc_maxlifetime');

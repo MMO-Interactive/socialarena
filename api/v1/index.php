@@ -42,10 +42,11 @@ if (($segments[0] ?? '') === 'meta' && count($segments) === 1) {
                 'timeline' => true,
                 'exports' => true,
                 'request_id' => true,
+                'asset_sync' => true,
             ],
             'routes' => [
                 'public' => ['GET /health', 'GET /meta', 'POST /auth/editor-login'],
-                'authenticated' => ['GET /auth/session', 'POST /auth/refresh', 'GET /auth/me', 'GET /auth/studios', 'GET /auth/capabilities', 'POST /auth/select-studio', 'POST /auth/logout'],
+                'authenticated' => ['GET /auth/session', 'POST /auth/refresh', 'GET /auth/me', 'GET /auth/studios', 'GET /auth/capabilities', 'POST /auth/select-studio', 'POST /auth/logout', 'POST /editor/assets/sync/upload', 'GET /editor/assets/sync/changes', 'GET /editor/assets/sync/download', 'POST /editor/assets/sync/delete'],
             ],
         ],
     ]);
@@ -658,6 +659,176 @@ if (($segments[0] ?? '') === 'editor' && ($segments[1] ?? '') === 'timeline' && 
         'timeline_project_id' => $timelineProjectId,
         'saved_at' => gmdate('c'),
     ]);
+}
+
+
+if (($segments[0] ?? '') === 'editor' && ($segments[1] ?? '') === 'assets' && ($segments[2] ?? '') === 'sync' && count($segments) === 4) {
+    $action = $segments[3];
+    $effectiveStudioId = api_resolve_effective_studio_id($pdo, $userId, ['allow_null' => true]);
+    $namespace = api_editor_asset_sync_namespace($userId, $effectiveStudioId !== null ? (int) $effectiveStudioId : null);
+
+    if ($action === 'upload') {
+        api_require_method('POST');
+        if (empty($_FILES['asset']) || ($_FILES['asset']['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK) {
+            api_error('ASSET_REQUIRED', 'A file upload under "asset" is required.', 400);
+        }
+
+        $assetFile = $_FILES['asset'];
+        $originalName = trim((string) ($assetFile['name'] ?? 'asset.bin'));
+        $extension = strtolower((string) pathinfo($originalName, PATHINFO_EXTENSION));
+        if ($extension === '') {
+            $extension = 'bin';
+        }
+        if (!in_array($extension, api_editor_asset_sync_allowed_extensions(), true)) {
+            api_error('INVALID_ASSET_TYPE', 'Unsupported file extension for asset sync.', 400);
+        }
+        $maxBytes = api_editor_asset_sync_max_bytes();
+        if ((int) ($assetFile['size'] ?? 0) <= 0 || (int) ($assetFile['size'] ?? 0) > $maxBytes) {
+            api_error('INVALID_ASSET_SIZE', 'Asset exceeds maximum allowed size of 1GB.', 400);
+        }
+
+        $assetKeyInput = trim((string) ($_POST['asset_key'] ?? ''));
+        $assetKey = $assetKeyInput !== '' ? api_editor_asset_sync_asset_key($assetKeyInput) : api_editor_asset_sync_asset_key($originalName);
+        $relativePath = api_editor_asset_sync_relative_path($namespace, $assetKey, $extension);
+        $absolutePath = dirname(__DIR__, 2) . '/' . api_editor_asset_sync_public_url($relativePath);
+        $absoluteDir = dirname($absolutePath);
+        if (!is_dir($absoluteDir) && !mkdir($absoluteDir, 0775, true) && !is_dir($absoluteDir)) {
+            api_error('ASSET_SYNC_UNAVAILABLE', 'Could not initialize asset sync storage.', 500);
+        }
+
+        if (!move_uploaded_file((string) $assetFile['tmp_name'], $absolutePath)) {
+            api_error('ASSET_SAVE_FAILED', 'Could not store uploaded asset.', 500);
+        }
+        $checksum = hash_file('sha256', $absolutePath);
+        if ($checksum === false) {
+            api_error('ASSET_SAVE_FAILED', 'Could not calculate asset checksum.', 500);
+        }
+
+        $manifest = api_editor_asset_sync_load_manifest($namespace);
+        $createdAt = gmdate('c');
+        $entry = [
+            'asset_key' => $assetKey,
+            'original_name' => $originalName,
+            'mime_type' => (string) ($assetFile['type'] ?? 'application/octet-stream'),
+            'size_bytes' => (int) ($assetFile['size'] ?? filesize($absolutePath) ?: 0),
+            'relative_path' => $relativePath,
+            'url' => api_editor_asset_sync_public_url($relativePath),
+            'project_type' => trim((string) ($_POST['project_type'] ?? '')) ?: null,
+            'project_id' => is_numeric($_POST['project_id'] ?? null) ? (int) $_POST['project_id'] : null,
+            'checksum_sha256' => $checksum,
+            'deleted' => false,
+            'updated_at' => $createdAt,
+        ];
+
+        $manifestIndex = api_editor_asset_sync_find_index($manifest, $assetKey);
+        $replaced = $manifestIndex >= 0;
+        if ($replaced) {
+            $manifest[$manifestIndex] = $entry;
+        } else {
+            $manifest[] = $entry;
+        }
+        api_editor_asset_sync_sort_manifest($manifest);
+        api_editor_asset_sync_write_manifest($namespace, $manifest);
+
+        api_success([
+            'asset' => $entry,
+            'namespace' => $namespace,
+        ], $replaced ? 200 : 201);
+    }
+
+    if ($action === 'changes') {
+        api_require_method('GET');
+        $manifest = api_editor_asset_sync_load_manifest($namespace);
+        $since = trim((string) ($_GET['since'] ?? ''));
+        $limit = min(500, max(1, (int) ($_GET['limit'] ?? 100)));
+
+        $sinceTs = null;
+        if ($since !== '') {
+            $parsed = strtotime($since);
+            if ($parsed === false) {
+                api_error('INVALID_SINCE', 'since must be a valid ISO-8601 timestamp.', 400);
+            }
+            $sinceTs = $parsed;
+        }
+
+        $changes = [];
+        $cursor = $since !== '' ? $since : gmdate('c');
+        foreach ($manifest as $row) {
+            $updatedAt = (string) ($row['updated_at'] ?? '');
+            $updatedTs = $updatedAt !== '' ? strtotime($updatedAt) : false;
+            if ($sinceTs !== null && ($updatedTs === false || $updatedTs <= $sinceTs)) {
+                continue;
+            }
+            $changes[] = $row;
+            $cursor = $updatedAt !== '' ? $updatedAt : $cursor;
+            if (count($changes) >= $limit) {
+                break;
+            }
+        }
+
+        api_success([
+            'namespace' => $namespace,
+            'changes' => $changes,
+            'count' => count($changes),
+            'cursor' => $cursor,
+        ]);
+    }
+
+    if ($action === 'download') {
+        api_require_method('GET');
+        $assetKey = trim((string) ($_GET['asset_key'] ?? ''));
+        if ($assetKey === '') {
+            api_error('ASSET_KEY_REQUIRED', 'asset_key query parameter is required.', 400);
+        }
+
+        $manifest = api_editor_asset_sync_load_manifest($namespace);
+        $entry = null;
+        foreach ($manifest as $row) {
+            if (($row['asset_key'] ?? '') === $assetKey) {
+                $entry = $row;
+                break;
+            }
+        }
+
+        if (!$entry) {
+            api_error('ASSET_NOT_FOUND', 'Requested asset was not found in this sync namespace.', 404);
+        }
+
+        api_success([
+            'namespace' => $namespace,
+            'asset' => $entry,
+        ]);
+    }
+
+    if ($action === 'delete') {
+        api_require_method('POST');
+        $data = api_request_json();
+        $assetKey = trim((string) ($data['asset_key'] ?? ''));
+        if ($assetKey === '') {
+            api_error('ASSET_KEY_REQUIRED', 'asset_key is required in request body.', 400);
+        }
+
+        $manifest = api_editor_asset_sync_load_manifest($namespace);
+        $manifestIndex = api_editor_asset_sync_find_index($manifest, $assetKey);
+        if ($manifestIndex < 0) {
+            api_error('ASSET_NOT_FOUND', 'Requested asset was not found in this sync namespace.', 404);
+        }
+
+        $updatedAt = gmdate('c');
+        $manifest[$manifestIndex]['deleted'] = true;
+        $manifest[$manifestIndex]['updated_at'] = $updatedAt;
+        api_editor_asset_sync_sort_manifest($manifest);
+        api_editor_asset_sync_write_manifest($namespace, $manifest);
+
+        api_success([
+            'namespace' => $namespace,
+            'asset_key' => $assetKey,
+            'deleted' => true,
+            'updated_at' => $updatedAt,
+        ]);
+    }
+
+    api_error('NOT_FOUND', 'Requested asset sync action could not be found.', 404);
 }
 
 if (($segments[0] ?? '') === 'editor' && ($segments[1] ?? '') === 'exports' && count($segments) === 3 && $segments[2] === 'init') {
