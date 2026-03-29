@@ -56,6 +56,20 @@ What is still incomplete:
 - the scene/shot/clip model is stronger in UI than in saved contract
 - reopen/recovery behavior is not yet dependable enough
 
+Additional repository analyses reviewed on 2026-03-28 confirm the same direction:
+
+- [API_ANALYSIS_AND_NEXT_NEEDS.md](C:/wamp64/www/adventure/API_ANALYSIS_AND_NEXT_NEEDS.md)
+- [BACKEND_ANALYSIS_2026-03-28.md](C:/wamp64/www/adventure/docs/BACKEND_ANALYSIS_2026-03-28.md)
+- [FRONTEND_GAP_ANALYSIS.md](C:/wamp64/www/adventure/FRONTEND_GAP_ANALYSIS.md)
+- [GUI_REVIEW_2026-03-28.md](C:/wamp64/www/adventure/docs/GUI_REVIEW_2026-03-28.md)
+
+Those documents do not change the V2 core product model.
+They do make three execution constraints more explicit:
+
+1. backend/API consistency must improve in parallel with V2 persistence work
+2. canonical ownership between local state and backend state must be defined, not implied
+3. accessibility, readiness signaling, and deep edit-stage interaction quality must be treated as product requirements, not polish-only work
+
 ---
 
 ## Success Criteria For V2
@@ -130,6 +144,11 @@ Until persistence is consistent, the product cannot be trusted.
    - what is stored directly
    - what is rebuilt
    - what is temporary UI state only
+7. Define stage ownership rules explicitly:
+   - backend-authoritative fields
+   - frontend-cached fields
+   - frontend-derived fields
+8. Make the save shape versioned so reopen logic can evolve safely.
 
 ### Exit Criteria
 
@@ -142,6 +161,7 @@ Until persistence is consistent, the product cannot be trusted.
   - export history summary
 - switching stages does not silently discard work
 - local restore behavior is predictable and explainable
+- canonical ownership between frontend and backend state is documented and enforced in code paths
 
 ---
 
@@ -234,6 +254,16 @@ V2 already has the right conceptual editor. It now needs the minimum mechanics r
    - playhead visibility
    - position-aware operations
 8. Improve preview/program monitor behavior so playback feels tied to timeline context, not just selected media.
+9. Add direct-manipulation affordances:
+   - drag reorder
+   - drag track reassignment
+   - visual trim/split affordances
+10. Improve interaction feedback:
+   - selected
+   - hover
+   - pressed
+   - unavailable
+   - active scene / active slot emphasis
 
 ### Exit Criteria
 
@@ -241,6 +271,7 @@ V2 already has the right conceptual editor. It now needs the minimum mechanics r
 - narrative clips can be moved, split, trimmed, and replaced
 - scene ownership remains intact while editing
 - the timeline behaves like one coherent editing surface
+- the edit stage feels direct, not button-only
 
 ---
 
@@ -278,12 +309,18 @@ The V1 API is the contract V2 must ship against. That means ambiguity in saved s
    - what V2 derives locally
    - what V2 persists back into project payloads
 5. Harden studio-scoped access and stale-project recovery.
+6. Define and publish a stable API contract layer for the V2-critical routes:
+   - success envelope
+   - error envelope
+   - async job status vocabulary
+7. Add request correlation support and structured logs where practical for the V2-critical editor routes.
 
 ### Exit Criteria
 
 - remote project open is reliable
 - stage rehydration from platform data is coherent
 - save/open behavior does not depend on hidden local-only assumptions
+- V2-critical API behavior is consistent enough to support typed clients later without redoing the route surface
 
 ---
 
@@ -312,12 +349,24 @@ Once persistence, orchestration, and editing are in place, the biggest remaining
 4. Ensure stage entry hooks always rehydrate what they need.
 5. Tighten workflow notices and action feedback so users understand system state.
 6. Remove remaining placeholder behavior and ambiguous labels.
+7. Add stage readiness and preflight checks:
+   - missing upstream prerequisites
+   - unresolved required scene slots
+   - export blockers
+8. Add keyboard and accessibility hardening for the full V2 path:
+   - auth
+   - studio selection
+   - dashboard
+   - stage switching
+   - edit
+   - export
 
 ### Exit Criteria
 
 - the user can recover from stage errors without losing work
 - saved projects restore cleanly after restart
 - the seven-step loop feels intentional and dependable, not fragile
+- the primary V2 workflow is keyboard-usable and has explicit readiness guidance
 
 ---
 
@@ -438,10 +487,17 @@ The next correct implementation block is:
 2. persist `Script` into project data
 3. persist `Edit` timeline state into project data
 4. make project open rebuild all three cleanly
+5. document canonical ownership for those saved shapes in code comments or companion notes
 
 This is the right next block because it removes the biggest current product risk:
 
 `strong workflow ideas with incomplete durability`
+
+Immediately after that block:
+
+1. add export preflight blocking when required scene slots remain unresolved
+2. add first playhead/readiness/accessibility hardening pass
+3. start direct-manipulation timeline behavior
 
 ---
 

@@ -11,14 +11,17 @@
     };
   }
 
-  function applyDraftFromDom(store, appElement) {
+  async function applyDraftFromDom(store, appElement) {
     const nextDraft = buildDraftFromDom(appElement, globalScope.CreatorAppV2ExportReleaseState.getExportReleaseDraft(store));
     globalScope.CreatorAppV2ProjectWorkspace.updateExportReleaseDraft(store, nextDraft);
+    await globalScope.CreatorAppV2ProjectController.saveWorkspaceTimeline(store, {
+      notice: "Export and release plan applied and saved to project workspace."
+    });
     store.setState((state) => ({
       ...state,
       workflow: {
         ...state.workflow,
-        notice: "Export and release plan applied."
+        notice: "Export and release plan applied and saved to project workspace."
       }
     }));
   }
@@ -54,11 +57,14 @@
         error: "",
         updatedAt: new Date().toISOString()
       }), { dirty: false });
+      await globalScope.CreatorAppV2ProjectController.saveWorkspaceTimeline(store, {
+        notice: "Export history refreshed and saved to project workspace."
+      });
       store.setState((currentState) => ({
         ...currentState,
         workflow: {
           ...currentState.workflow,
-          notice: "Export history refreshed."
+          notice: "Export history refreshed and saved to project workspace."
         }
       }));
     } catch (error) {
@@ -115,11 +121,14 @@
         ],
         updatedAt: new Date().toISOString()
       }), { dirty: false });
+      await globalScope.CreatorAppV2ProjectController.saveWorkspaceTimeline(store, {
+        notice: "Export initialized in the V1 API and saved to project workspace."
+      });
       store.setState((currentState) => ({
         ...currentState,
         workflow: {
           ...currentState.workflow,
-          notice: "Export initialized in the V1 API."
+          notice: "Export initialized in the V1 API and saved to project workspace."
         }
       }));
     } catch (error) {
@@ -171,11 +180,14 @@
         activeExportId: Number(exportId),
         updatedAt: new Date().toISOString()
       }), { dirty: false });
+      await globalScope.CreatorAppV2ProjectController.saveWorkspaceTimeline(store, {
+        notice: "Export marked complete and saved to project workspace."
+      });
       store.setState((currentState) => ({
         ...currentState,
         workflow: {
           ...currentState.workflow,
-          notice: "Export marked complete."
+          notice: "Export marked complete and saved to project workspace."
         }
       }));
     } catch (error) {
@@ -188,12 +200,13 @@
     }
   }
 
-  function selectExport(store, exportId) {
+  async function selectExport(store, exportId) {
     globalScope.CreatorAppV2ProjectWorkspace.updateExportReleaseDraft(store, (draft) => ({
       ...draft,
       activeExportId: Number(exportId || 0),
       updatedAt: new Date().toISOString()
     }));
+    await globalScope.CreatorAppV2ProjectController.saveWorkspaceTimeline(store);
   }
 
   globalScope.CreatorAppV2ExportReleaseActions = {

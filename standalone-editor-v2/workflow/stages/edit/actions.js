@@ -40,6 +40,34 @@
     globalScope.CreatorAppV2ProjectWorkspace.setEditActiveScene(store, sceneId);
   }
 
+  function setPlayhead(store, timeSeconds) {
+    globalScope.CreatorAppV2ProjectWorkspace.setEditPlayhead(store, timeSeconds);
+  }
+
+  function stepPlayhead(store, deltaSeconds = 1) {
+    globalScope.CreatorAppV2ProjectWorkspace.stepEditPlayhead(store, deltaSeconds);
+    return true;
+  }
+
+  function addMarkerAtPlayhead(store) {
+    globalScope.CreatorAppV2ProjectWorkspace.addEditMarkerAtPlayhead(store);
+    return true;
+  }
+
+  function startPlayback(store) {
+    void store;
+    return true;
+  }
+
+  function pausePlayback() {
+    return true;
+  }
+
+  function stopPlayback(store) {
+    globalScope.CreatorAppV2ProjectWorkspace.setEditPlayhead(store, 0);
+    return true;
+  }
+
   function assignSelectedTimelineItemToActiveScene(store) {
     const selectedItem = globalScope.CreatorAppV2EditState.getSelectedTimelineItem(store);
     const activeScene = globalScope.CreatorAppV2EditState.getActiveScene(store);
@@ -128,6 +156,14 @@
     return true;
   }
 
+  function setTimelineItemDuration(store, itemId, durationSeconds) {
+    if (!itemId) {
+      return false;
+    }
+    globalScope.CreatorAppV2ProjectWorkspace.setTimelineItemDuration(store, itemId, durationSeconds);
+    return true;
+  }
+
   function replaceSelectedTimelineItemFromApprovedTake(store) {
     const selectedItem = globalScope.CreatorAppV2EditState.getSelectedTimelineItem(store);
     if (!selectedItem?.requestId) {
@@ -156,11 +192,25 @@
     return true;
   }
 
+  function moveTimelineItemByDrop(store, itemId, target) {
+    if (!itemId) {
+      return false;
+    }
+    globalScope.CreatorAppV2ProjectWorkspace.moveTimelineItemToDropTarget(store, itemId, target);
+    return true;
+  }
+
   globalScope.CreatorAppV2EditActions = {
     buildRoughCut,
     selectTimelineItem,
     selectImportedAsset,
     setActiveScene,
+    setPlayhead,
+    stepPlayhead,
+    addMarkerAtPlayhead,
+    startPlayback,
+    pausePlayback,
+    stopPlayback,
     assignSelectedTimelineItemToActiveScene,
     updateSelectedTimelineItemPlacementType,
     moveSelectedTimelineItem,
@@ -169,6 +219,8 @@
     splitSelectedTimelineItem,
     removeSelectedTimelineItem,
     trimSelectedTimelineItem,
+    setTimelineItemDuration,
+    moveTimelineItemByDrop,
     replaceSelectedTimelineItemFromApprovedTake
   };
 })(window);

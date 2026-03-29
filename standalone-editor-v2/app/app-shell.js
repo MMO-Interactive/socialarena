@@ -1,4 +1,10 @@
 (function attachV2AppShell(globalScope) {
+  function withIcon(icon, label, iconOnly = false) {
+    return iconOnly
+      ? `<span class="v2-icon" aria-hidden="true">${icon}</span><span class="v2-visually-hidden">${label}</span>`
+      : `<span class="v2-icon" aria-hidden="true">${icon}</span><span>${label}</span>`;
+  }
+
   function getCurrentStudioSummary(session) {
     const studios = Array.isArray(session?.studios) ? session.studios : [];
     return studios.find((studio) => String(studio.id) === String(session?.studioId)) || null;
@@ -146,9 +152,9 @@
           sessionPath: "Dashboard",
           notice: workflow.notice,
           actions: [
-            `<button class="v2-button-ghost v2-toolbar-button" type="button" data-action="open-workflow">Workflow</button>`,
-            `<button class="v2-button-ghost v2-toolbar-button" type="button" data-action="open-studio-selector">Switch Studio</button>`,
-            `<button class="v2-button-ghost v2-toolbar-button" type="button" data-action="refresh">Refresh</button>`
+            `<button class="v2-button-ghost v2-toolbar-button v2-button-has-icon" type="button" data-action="open-workflow">${withIcon("▶", "Workflow")}</button>`,
+            `<button class="v2-button-ghost v2-toolbar-button v2-button-has-icon" type="button" data-action="open-studio-selector">${withIcon("◎", "Switch Studio")}</button>`,
+            `<button class="v2-button-ghost v2-toolbar-button v2-button-has-icon" type="button" data-action="refresh">${withIcon("↻", "Refresh")}</button>`
           ]
         })}
 
@@ -246,14 +252,14 @@
                                     <span>${project.type || project.project_type || "project"}</span>
                                   </div>
                                   <button
-                                    class="v2-button-ghost v2-button-inline"
+                                    class="v2-button-ghost v2-button-inline v2-button-has-icon"
                                     type="button"
                                     data-action="open-project"
                                     data-project-id="${project.id}"
                                     data-project-type="${project.type || project.project_type || "episode"}"
                                     data-project-title="${project.title || project.name || "Untitled Project"}"
                                   >
-                                    Open
+                                    ${withIcon("↗", "Open")}
                                   </button>
                                 </div>
                               `).join("")
@@ -438,12 +444,12 @@
           sessionPath: `${projectTitle} / ${activeStage.label}`,
           notice: workflow.notice,
           actions: [
-            `<button class="v2-button-ghost v2-toolbar-button" type="button" data-stage-id="idea_board">Idea Board</button>`,
-            `<button class="v2-button-ghost v2-toolbar-button" type="button" data-stage-id="script">Script</button>`,
-            `<button class="v2-button-ghost v2-toolbar-button" type="button" data-stage-id="edit">Edit</button>`,
-            `<button class="v2-button-ghost v2-toolbar-button" type="button" data-action="open-dashboard">Dashboard</button>`,
-            `<button class="v2-button-ghost v2-toolbar-button" type="button" data-action="open-studio-selector">Switch Studio</button>`,
-            `<button class="v2-button-ghost v2-toolbar-button" type="button" data-action="refresh">Refresh</button>`
+            `<button class="v2-button-ghost v2-toolbar-button v2-button-has-icon" type="button" data-stage-id="idea_board">${withIcon("◫", "Idea Board")}</button>`,
+            `<button class="v2-button-ghost v2-toolbar-button v2-button-has-icon" type="button" data-stage-id="script">${withIcon("✎", "Script")}</button>`,
+            `<button class="v2-button-ghost v2-toolbar-button v2-button-has-icon" type="button" data-stage-id="edit">${withIcon("✂", "Edit")}</button>`,
+            `<button class="v2-button-ghost v2-toolbar-button v2-button-has-icon" type="button" data-action="open-dashboard">${withIcon("⌂", "Dashboard")}</button>`,
+            `<button class="v2-button-ghost v2-toolbar-button v2-button-has-icon" type="button" data-action="open-studio-selector">${withIcon("◎", "Switch Studio")}</button>`,
+            `<button class="v2-button-ghost v2-toolbar-button v2-button-has-icon" type="button" data-action="refresh">${withIcon("↻", "Refresh")}</button>`
           ]
         })}
 

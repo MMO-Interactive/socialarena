@@ -12,24 +12,28 @@
     };
   }
 
-  function applyDraftFromDom(store, appElement) {
+  async function applyDraftFromDom(store, appElement) {
     const nextDraft = buildDraftFromDom(appElement, globalScope.CreatorAppV2StartingImagesState.getStartingImagesDraft(store));
     globalScope.CreatorAppV2ProjectWorkspace.updateStartingImagesDraft(store, nextDraft);
+    await globalScope.CreatorAppV2ProjectController.saveWorkspaceTimeline(store, {
+      notice: "Starting image plan applied and saved to project workspace."
+    });
     store.setState((state) => ({
       ...state,
       workflow: {
         ...state.workflow,
-        notice: "Starting image plan applied."
+        notice: "Starting image plan applied and saved to project workspace."
       }
     }));
   }
 
-  function selectScene(store, sceneId) {
+  async function selectScene(store, sceneId) {
     globalScope.CreatorAppV2ProjectWorkspace.updateStartingImagesDraft(store, (draft) => ({
       ...draft,
       selectedSceneId: sceneId,
       updatedAt: new Date().toISOString()
     }));
+    await globalScope.CreatorAppV2ProjectController.saveWorkspaceTimeline(store);
   }
 
   async function generateForScene(store, appElement, sceneId) {
@@ -63,11 +67,14 @@
         }
       );
       globalScope.CreatorAppV2ProjectWorkspace.applyStartingImagePayload(store, sceneId, payload?.starting_image || {});
+      await globalScope.CreatorAppV2ProjectController.saveWorkspaceTimeline(store, {
+        notice: `Queued starting image generation for ${scene.title} and saved project workspace.`
+      });
       store.setState((currentState) => ({
         ...currentState,
         workflow: {
           ...currentState.workflow,
-          notice: `Queued starting image generation for ${scene.title}.`
+          notice: `Queued starting image generation for ${scene.title} and saved project workspace.`
         }
       }));
     } catch (error) {
@@ -96,13 +103,18 @@
         }
       );
       globalScope.CreatorAppV2ProjectWorkspace.applyStartingImagePayload(store, sceneId, payload?.starting_image || {});
+      await globalScope.CreatorAppV2ProjectController.saveWorkspaceTimeline(store, {
+        notice: payload?.starting_image?.generated_image_url
+          ? `Starting image ready for ${scene.title} and saved to project workspace.`
+          : `Refreshed starting image status for ${scene.title} and saved project workspace.`
+      });
       store.setState((currentState) => ({
         ...currentState,
         workflow: {
           ...currentState.workflow,
           notice: payload?.starting_image?.generated_image_url
-            ? `Starting image ready for ${scene.title}.`
-            : `Refreshed starting image status for ${scene.title}.`
+            ? `Starting image ready for ${scene.title} and saved to project workspace.`
+            : `Refreshed starting image status for ${scene.title} and saved project workspace.`
         }
       }));
     } catch (error) {
@@ -110,7 +122,7 @@
     }
   }
 
-  function approveVariation(store, sceneId, variationId) {
+  async function approveVariation(store, sceneId, variationId) {
     globalScope.CreatorAppV2ProjectWorkspace.updateStartingImagesDraft(store, (draft) => ({
       ...draft,
       scenes: draft.scenes.map((scene) =>
@@ -124,11 +136,14 @@
       ),
       updatedAt: new Date().toISOString()
     }));
+    await globalScope.CreatorAppV2ProjectController.saveWorkspaceTimeline(store, {
+      notice: "Approved starting image anchor frame and saved project workspace."
+    });
     store.setState((state) => ({
       ...state,
       workflow: {
         ...state.workflow,
-        notice: "Approved starting image anchor frame."
+        notice: "Approved starting image anchor frame and saved project workspace."
       }
     }));
   }

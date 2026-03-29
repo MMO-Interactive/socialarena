@@ -1,4 +1,10 @@
 (function attachV2EditStage(globalScope) {
+  function iconLabel(icon, label, iconOnly = false) {
+    return iconOnly
+      ? `<span class="v2-icon" aria-hidden="true">${icon}</span><span class="v2-visually-hidden">${label}</span>`
+      : `<span class="v2-icon" aria-hidden="true">${icon}</span><span>${label}</span>`;
+  }
+
   function formatDuration(seconds) {
     const value = Math.max(0, Number(seconds || 0));
     const minutes = Math.floor(value / 60);
@@ -137,11 +143,12 @@
   }
 
   function getSceneSegments(videoDraft, editDraft) {
+    let runningStartSeconds = 0;
     return (videoDraft.scenes || []).map((scene) => {
       const normalizedSceneId = scene.scriptSceneId || scene.id;
       const sceneItems = editDraft.timelineItems.filter((item) => item.sceneId === normalizedSceneId);
       const sceneDurationSeconds = sceneItems.length
-        ? sceneItems.reduce((total, item) => total + Number(item.durationSeconds || 0), 0)
+        ? sceneItems.reduce((maxSeconds, item) => Math.max(maxSeconds, Number(item.startSeconds || 0) + Number(item.durationSeconds || 0)), 0)
         : Math.max(4, Number(scene.clips?.length || 1) * 4);
       const assembledCount = scene.clips.filter((clip) =>
         sceneItems.some((item) => String(item.requestId || "") === String(clip.id))
@@ -149,13 +156,14 @@
       const sourceScene = (globalScope.CreatorAppV2PipelineIntelligence && globalScope.CreatorAppV2PipelineIntelligence.summarizeSceneExecution)
         ? globalScope.CreatorAppV2PipelineIntelligence.summarizeSceneExecution(scene).confidence
         : null;
-      return {
+      const segment = {
         id: scene.id,
         videoSceneId: scene.id,
         sceneId: normalizedSceneId,
         title: scene.title,
         clipCount: scene.clips.length,
         assembledCount,
+        startSeconds: runningStartSeconds,
         slots: (scene.clips || []).map((clip) => ({
           id: clip.id,
           requestId: clip.id,
@@ -174,6 +182,8 @@
         width: getTimelineItemWidth({ durationSeconds: sceneDurationSeconds }),
         confidence: sourceScene
       };
+      runningStartSeconds += sceneDurationSeconds;
+      return segment;
     });
   }
 
@@ -213,7 +223,7 @@
     }
 
     return `
-      <div class="v2-edit-ruler" style="width:${Math.max(720, totalDuration * getTimelinePixelsPerSecond())}px">
+      <div class="v2-edit-ruler" data-action="seek-timeline" data-pixels-per-second="${getTimelinePixelsPerSecond()}" style="width:${Math.max(720, totalDuration * getTimelinePixelsPerSecond())}px">
         ${ticks.join("")}
       </div>
     `;
@@ -224,9 +234,30 @@
     return Math.max(720, totalDuration * getTimelinePixelsPerSecond());
   }
 
+  function getPlayheadOffset(editDraft) {
+    return Math.max(0, Number(editDraft.playheadSeconds || 0)) * getTimelinePixelsPerSecond();
+  }
+
+  function renderTimelineMarkers(editDraft) {
+    const markers = Array.isArray(editDraft.markers) ? editDraft.markers : [];
+    if (!markers.length) {
+      return "";
+    }
+    return `
+      <div class="v2-edit-marker-strip">
+        ${markers.map((marker) => `
+          <button class="v2-edit-marker" type="button" data-action="set-playhead" data-playhead-seconds="${Number(marker.timeSeconds || 0)}" style="left:${Number(marker.timeSeconds || 0) * getTimelinePixelsPerSecond()}px;">
+            <span>${marker.label}</span>
+          </button>
+        `).join("")}
+      </div>
+    `;
+  }
+
   function renderTimelineItem(item, index, selectedItem, trackId) {
     return `
-      <button class="v2-edit-sequence-clip ${selectedItem?.id === item.id ? "active" : ""}" type="button" data-action="select-edit-item" data-edit-item-id="${item.id}" style="width:${getTimelineItemWidth(item)}px; min-width:${getTimelineItemWidth(item)}px;">
+      <div class="v2-edit-sequence-clip ${selectedItem?.id === item.id ? "active" : ""}" draggable="true" tabindex="0" role="button" aria-label="${item.title}" data-action="select-edit-item" data-edit-item-id="${item.id}" data-drag-timeline-item-id="${item.id}" data-drag-track-id="${trackId}" data-duration-seconds="${Math.max(1, Number(item.durationSeconds || 1))}" style="width:${getTimelineItemWidth(item)}px; min-width:${getTimelineItemWidth(item)}px;">
+        <div class="v2-edit-trim-handle v2-edit-trim-handle-start" data-trim-handle="start" data-edit-item-id="${item.id}" title="Trim in"></div>
         <div class="v2-edit-sequence-index">${String(index + 1).padStart(2, "0")}</div>
         <div class="v2-edit-sequence-thumb">
           ${renderPreviewThumb(item, "No frame")}
@@ -236,7 +267,8 @@
           <span>${trackId} | ${formatDuration(item.durationSeconds)}${item.sceneTitle ? ` | ${item.sceneTitle}` : ""}</span>
         </div>
         <div class="v2-edit-item-role">${formatPlacementType(item.placementType)}</div>
-      </button>
+        <div class="v2-edit-trim-handle v2-edit-trim-handle-end" data-trim-handle="end" data-edit-item-id="${item.id}" title="Trim out"></div>
+      </div>
     `;
   }
 
@@ -297,6 +329,13 @@
       };
     });
     const unassignedItems = items.filter((item) => !assignedIds.has(item.id));
+    const unassignedStartSeconds = unassignedItems.length
+      ? Math.min(...unassignedItems.map((item) => Number(item.startSeconds || 0)))
+      : 0;
+    const unassignedEndSeconds = unassignedItems.length
+      ? Math.max(...unassignedItems.map((item) => Number(item.startSeconds || 0) + Number(item.durationSeconds || 0)))
+      : 0;
+    const unassignedWidth = Math.max(280, getTimelineItemWidth({ durationSeconds: Math.max(1, unassignedEndSeconds - unassignedStartSeconds) }));
 
     return `
       <div class="v2-edit-sequence-strip v2-edit-sequence-strip-grouped">
@@ -307,21 +346,37 @@
               <strong>${group.items.length} ${trackId}</strong>
             </div>
             ${trackId === "V1" ? renderSceneSlotStrip((group.slots || []).map((slot) => ({ ...slot, videoSceneId: group.videoSceneId }))) : ""}
-            <div class="v2-edit-scene-group-body">
+            <div class="v2-edit-scene-group-body" data-drop-track-id="${trackId}" data-drop-scene-id="${group.sceneId}" data-drop-scene-title="${group.title}" data-drop-start-seconds="${Number(group.startSeconds || 0)}">
               ${group.items.length
-                ? group.items.map((item, index) => renderTimelineItem(item, index, selectedItem, trackId)).join("")
+                ? group.items.map((item, index) => {
+                    const itemMarkup = renderTimelineItem(item, index, selectedItem, trackId);
+                    const playheadSeconds = Number(item.startSeconds || 0);
+                    const relativeStartSeconds = Math.max(0, playheadSeconds - Number(group.startSeconds || 0));
+                    return itemMarkup.replace(
+                      'style="',
+                      `data-playhead-seconds="${playheadSeconds}" style="left:${relativeStartSeconds * getTimelinePixelsPerSecond()}px; `
+                    );
+                  }).join("")
                 : `<div class="v2-edit-scene-group-empty">No ${trackId} placements</div>`}
             </div>
           </section>
         `).join("")}
         ${unassignedItems.length ? `
-          <section class="v2-edit-scene-group v2-edit-scene-group-unassigned">
+          <section class="v2-edit-scene-group v2-edit-scene-group-unassigned" style="width:${unassignedWidth}px; min-width:${unassignedWidth}px;">
             <div class="v2-edit-scene-group-head">
               <span>Unassigned</span>
               <strong>${unassignedItems.length} ${trackId}</strong>
             </div>
-            <div class="v2-edit-scene-group-body">
-              ${unassignedItems.map((item, index) => renderTimelineItem(item, index, selectedItem, trackId)).join("")}
+            <div class="v2-edit-scene-group-body" data-drop-track-id="${trackId}" data-drop-scene-id="" data-drop-scene-title="" data-drop-start-seconds="${Number(unassignedStartSeconds || 0)}">
+              ${unassignedItems.map((item, index) => {
+                const itemMarkup = renderTimelineItem(item, index, selectedItem, trackId);
+                const playheadSeconds = Number(item.startSeconds || 0);
+                const relativeStartSeconds = Math.max(0, playheadSeconds - unassignedStartSeconds);
+                return itemMarkup.replace(
+                  'style="',
+                  `data-playhead-seconds="${playheadSeconds}" style="left:${relativeStartSeconds * getTimelinePixelsPerSecond()}px; `
+                );
+              }).join("")}
             </div>
           </section>
         ` : ""}
@@ -367,8 +422,8 @@
     const videoDraft = globalScope.CreatorAppV2ClipGenerationState.getVideoClipsDraft({ getState: () => state });
     const workspaceProjects = Array.isArray(state?.workspace?.projects?.items) ? state.workspace.projects.items : [];
     const importedAssets = Array.isArray(state?.projectWorkspace?.importedAssets) ? state.projectWorkspace.importedAssets : [];
-    const videoTimelineItems = editDraft.timelineItems.filter((item) => item.trackId !== "A1");
-    const audioTimelineItems = editDraft.timelineItems.filter((item) => item.trackId === "A1");
+    const videoTimelineItems = editDraft.timelineItems.filter((item) => item.type !== "audio");
+    const audioTimelineItems = editDraft.timelineItems.filter((item) => item.type === "audio");
     const narrativeVideoItems = videoTimelineItems.filter((item) => item.placementType === "scene_shot");
     const supportVideoItems = videoTimelineItems.filter((item) => item.placementType !== "scene_shot");
     const musicAudioItems = audioTimelineItems.filter((item) => item.placementType === "music");
@@ -438,7 +493,7 @@
                 </div>
               </div>
               <div class="v2-edit-bin-actions">
-                <button class="v2-button-ghost v2-button-inline" type="button" data-action="import-assets">Import Clips / Images / Audio</button>
+                <button class="v2-button-ghost v2-button-inline v2-button-has-icon" type="button" data-action="import-assets">${iconLabel("＋", "Import Media")}</button>
               </div>
               <div class="v2-edit-bin-list">
                 ${importedAssets.length
@@ -476,26 +531,31 @@
                   </label>
                   <button class="v2-button-ghost v2-button-inline" type="button" data-action="assign-selected-item-to-active-scene" ${selectedItem && !selectedItem.sourceKind ? "" : "disabled"}>Assign To Scene</button>
                 </div>
-                <div class="v2-edit-toolbar-group">
-                  <button class="v2-button-ghost v2-button-inline" type="button" data-action="trim-selected-item-shorter" ${selectedTimelineItem ? "" : "disabled"}>Trim -</button>
-                  <button class="v2-button-ghost v2-button-inline" type="button" data-action="trim-selected-item-longer" ${selectedTimelineItem ? "" : "disabled"}>Trim +</button>
-                  <button class="v2-button-ghost v2-button-inline" type="button" disabled>Marker</button>
+              <div class="v2-edit-toolbar-group">
+                  <button class="v2-button-ghost v2-button-inline v2-button-icon" title="Trim Shorter" type="button" data-action="trim-selected-item-shorter" ${selectedTimelineItem ? "" : "disabled"}>${iconLabel("⟨", "Trim Shorter", true)}</button>
+                  <button class="v2-button-ghost v2-button-inline v2-button-icon" title="Trim Longer" type="button" data-action="trim-selected-item-longer" ${selectedTimelineItem ? "" : "disabled"}>${iconLabel("⟩", "Trim Longer", true)}</button>
+                  <button class="v2-button-ghost v2-button-inline v2-button-icon" title="Add Marker" type="button" data-action="add-timeline-marker">${iconLabel("◆", "Marker", true)}</button>
                 </div>
                 <div class="v2-edit-toolbar-group">
-                  <button class="v2-button-ghost v2-button-inline" type="button" data-action="move-selected-item-left" ${selectedTimelineItem ? "" : "disabled"}>Left</button>
-                  <button class="v2-button-ghost v2-button-inline" type="button" data-action="move-selected-item-right" ${selectedTimelineItem ? "" : "disabled"}>Right</button>
-                  <button class="v2-button-ghost v2-button-inline" type="button" data-action="move-selected-item-up" ${selectedTimelineItem ? "" : "disabled"}>Up</button>
-                  <button class="v2-button-ghost v2-button-inline" type="button" data-action="move-selected-item-down" ${selectedTimelineItem ? "" : "disabled"}>Down</button>
+                  <button class="v2-button-ghost v2-button-inline v2-button-icon" title="Move Left" type="button" data-action="move-selected-item-left" ${selectedTimelineItem ? "" : "disabled"}>${iconLabel("←", "Left", true)}</button>
+                  <button class="v2-button-ghost v2-button-inline v2-button-icon" title="Move Right" type="button" data-action="move-selected-item-right" ${selectedTimelineItem ? "" : "disabled"}>${iconLabel("→", "Right", true)}</button>
+                  <button class="v2-button-ghost v2-button-inline v2-button-icon" title="Move Up" type="button" data-action="move-selected-item-up" ${selectedTimelineItem ? "" : "disabled"}>${iconLabel("↑", "Up", true)}</button>
+                  <button class="v2-button-ghost v2-button-inline v2-button-icon" title="Move Down" type="button" data-action="move-selected-item-down" ${selectedTimelineItem ? "" : "disabled"}>${iconLabel("↓", "Down", true)}</button>
                 </div>
                 <div class="v2-edit-toolbar-group">
-                  <button class="v2-button-ghost v2-button-inline" type="button" data-action="split-selected-item" ${selectedTimelineItem ? "" : "disabled"}>Split</button>
-                  <button class="v2-button-ghost v2-button-inline" type="button" data-action="duplicate-selected-item" ${selectedTimelineItem ? "" : "disabled"}>Duplicate</button>
-                  <button class="v2-button-ghost v2-button-inline" type="button" data-action="remove-selected-item" ${selectedTimelineItem ? "" : "disabled"}>Delete</button>
+                  <button class="v2-button-ghost v2-button-inline v2-button-icon" title="Split" type="button" data-action="split-selected-item" ${selectedTimelineItem ? "" : "disabled"}>${iconLabel("✂", "Split", true)}</button>
+                  <button class="v2-button-ghost v2-button-inline v2-button-icon" title="Duplicate" type="button" data-action="duplicate-selected-item" ${selectedTimelineItem ? "" : "disabled"}>${iconLabel("⧉", "Duplicate", true)}</button>
+                  <button class="v2-button-ghost v2-button-inline v2-button-icon" title="Delete" type="button" data-action="remove-selected-item" ${selectedTimelineItem ? "" : "disabled"}>${iconLabel("⌫", "Delete", true)}</button>
                 </div>
               </div>
               <div class="v2-edit-timeline-scroll">
-                ${renderTimelineRuler(editDraft)}
-                <div class="v2-edit-timeline-surface" style="width:${timelineSurfaceWidth}px; min-width:${timelineSurfaceWidth}px;">
+                <div class="v2-edit-ruler-shell">
+                  ${renderTimelineRuler(editDraft)}
+                  ${renderTimelineMarkers(editDraft)}
+                  <div class="v2-edit-playhead" style="left:${getPlayheadOffset(editDraft)}px;"></div>
+                </div>
+                <div class="v2-edit-timeline-surface" data-action="seek-timeline" data-pixels-per-second="${getTimelinePixelsPerSecond()}" style="width:${timelineSurfaceWidth}px; min-width:${timelineSurfaceWidth}px;">
+                  <div class="v2-edit-playhead v2-edit-playhead-surface" style="left:${getPlayheadOffset(editDraft)}px;"></div>
                   <div class="v2-edit-track-shell">
                     <div class="v2-edit-track-label">Scene</div>
                     <div class="v2-edit-track-body">
@@ -543,14 +603,15 @@
                   <span class="v2-chip">1080p Draft</span>
                 </div>
               </div>
-              <div class="v2-edit-monitor">
+              <div class="v2-edit-monitor" data-edit-monitor>
                 ${renderProgramMonitor(selectedItem)}
               </div>
               <div class="v2-edit-transport">
-                <button class="v2-button-ghost v2-button-inline" type="button" disabled>Play</button>
-                <button class="v2-button-ghost v2-button-inline" type="button" disabled>Pause</button>
-                <button class="v2-button-ghost v2-button-inline" type="button" disabled>Stop</button>
-                <button class="v2-button-ghost v2-button-inline" type="button" disabled>Step</button>
+                <button class="v2-button-ghost v2-button-inline v2-button-icon" title="Play" type="button" data-action="play-timeline">${iconLabel("▶", "Play", true)}</button>
+                <button class="v2-button-ghost v2-button-inline v2-button-icon" title="Pause" type="button" data-action="pause-timeline">${iconLabel("❚❚", "Pause", true)}</button>
+                <button class="v2-button-ghost v2-button-inline v2-button-icon" title="Stop" type="button" data-action="stop-timeline">${iconLabel("■", "Stop", true)}</button>
+                <button class="v2-button-ghost v2-button-inline v2-button-icon" title="Step" type="button" data-action="step-timeline">${iconLabel("▷|", "Step", true)}</button>
+                <span class="v2-chip" data-edit-playhead-label>${formatDuration(editDraft.playheadSeconds || 0)}</span>
               </div>
             </div>
 

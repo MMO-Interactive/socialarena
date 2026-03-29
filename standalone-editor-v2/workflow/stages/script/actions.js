@@ -35,28 +35,27 @@
     });
   }
 
-  function applyScriptDraftFromDom(store, appElement) {
+  async function applyScriptDraftFromDom(store, appElement) {
     const currentDraft = globalScope.CreatorAppV2ScriptState.getScriptDraft(store);
     const nextDraft = buildDraftFromDom(appElement, currentDraft);
     globalScope.CreatorAppV2ProjectWorkspace.updateScriptDraft(store, nextDraft);
     globalScope.CreatorAppV2ProjectWorkspace.applyScriptDraft(store);
-    store.setState((state) => ({
-      ...state,
-      workflow: {
-        ...state.workflow,
-        notice: "Script draft applied to project workflow state."
-      }
-    }));
+    await globalScope.CreatorAppV2ProjectController.saveWorkspaceTimeline(store, {
+      notice: "Script draft applied and saved to project workspace."
+    });
   }
 
-  function addScene(store, appElement) {
+  async function addScene(store, appElement) {
     const currentDraft = buildDraftFromDom(appElement, globalScope.CreatorAppV2ScriptState.getScriptDraft(store));
     currentDraft.scenes.push(globalScope.CreatorAppV2ProjectWorkspace.createScriptScene({}, currentDraft.scenes.length));
     globalScope.CreatorAppV2ProjectWorkspace.updateScriptDraft(store, currentDraft);
     globalScope.CreatorAppV2ProjectWorkspace.applyScriptDraft(store);
+    await globalScope.CreatorAppV2ProjectController.saveWorkspaceTimeline(store, {
+      notice: "Scene added and saved to project workspace."
+    });
   }
 
-  function removeScene(store, appElement, sceneId) {
+  async function removeScene(store, appElement, sceneId) {
     const currentDraft = buildDraftFromDom(appElement, globalScope.CreatorAppV2ScriptState.getScriptDraft(store));
     currentDraft.scenes = currentDraft.scenes.filter((scene) => scene.id !== sceneId);
     if (!currentDraft.scenes.length) {
@@ -64,9 +63,12 @@
     }
     globalScope.CreatorAppV2ProjectWorkspace.updateScriptDraft(store, currentDraft);
     globalScope.CreatorAppV2ProjectWorkspace.applyScriptDraft(store);
+    await globalScope.CreatorAppV2ProjectController.saveWorkspaceTimeline(store, {
+      notice: "Scene removed and saved to project workspace."
+    });
   }
 
-  function addClip(store, appElement, sceneId) {
+  async function addClip(store, appElement, sceneId) {
     const currentDraft = buildDraftFromDom(appElement, globalScope.CreatorAppV2ScriptState.getScriptDraft(store));
     currentDraft.scenes = currentDraft.scenes.map((scene) => {
       if (scene.id !== sceneId) {
@@ -79,9 +81,12 @@
     });
     globalScope.CreatorAppV2ProjectWorkspace.updateScriptDraft(store, currentDraft);
     globalScope.CreatorAppV2ProjectWorkspace.applyScriptDraft(store);
+    await globalScope.CreatorAppV2ProjectController.saveWorkspaceTimeline(store, {
+      notice: "Clip slot added and saved to project workspace."
+    });
   }
 
-  function removeClip(store, appElement, sceneId, clipId) {
+  async function removeClip(store, appElement, sceneId, clipId) {
     const currentDraft = buildDraftFromDom(appElement, globalScope.CreatorAppV2ScriptState.getScriptDraft(store));
     currentDraft.scenes = currentDraft.scenes.map((scene) => {
       if (scene.id !== sceneId) {
@@ -95,9 +100,12 @@
     });
     globalScope.CreatorAppV2ProjectWorkspace.updateScriptDraft(store, currentDraft);
     globalScope.CreatorAppV2ProjectWorkspace.applyScriptDraft(store);
+    await globalScope.CreatorAppV2ProjectController.saveWorkspaceTimeline(store, {
+      notice: "Clip slot removed and saved to project workspace."
+    });
   }
 
-  function generateEntireScene(store, appElement, sceneId) {
+  async function generateEntireScene(store, appElement, sceneId) {
     const currentDraft = buildDraftFromDom(appElement, globalScope.CreatorAppV2ScriptState.getScriptDraft(store));
     currentDraft.scenes = currentDraft.scenes.map((scene) => {
       if (scene.id !== sceneId) {
@@ -131,13 +139,9 @@
 
     globalScope.CreatorAppV2ProjectWorkspace.updateScriptDraft(store, currentDraft);
     globalScope.CreatorAppV2ProjectWorkspace.applyScriptDraft(store);
-    store.setState((state) => ({
-      ...state,
-      workflow: {
-        ...state.workflow,
-        notice: "Generated a scene-level shot plan and populated real clip slots."
-      }
-    }));
+    await globalScope.CreatorAppV2ProjectController.saveWorkspaceTimeline(store, {
+      notice: "Generated a scene-level shot plan, populated clip slots, and saved project workspace."
+    });
   }
 
   globalScope.CreatorAppV2ScriptActions = {

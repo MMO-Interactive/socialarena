@@ -68,11 +68,21 @@
     return videoDraft.scenes.find((scene) => String(scene.scriptSceneId || scene.id) === String(draft.activeSceneId || "")) || videoDraft.scenes[0] || null;
   }
 
+  function getPlayheadSeconds(store) {
+    return Math.max(0, Number(getEditDraft(store).playheadSeconds || 0));
+  }
+
+  function getTimelineMarkers(store) {
+    return getEditDraft(store).markers || [];
+  }
+
   globalScope.CreatorAppV2EditState = {
     getEditDraft,
     getSelectedTimelineItem,
     getSelectedEditItem,
     getEditCoverage,
-    getActiveScene
+    getActiveScene,
+    getPlayheadSeconds,
+    getTimelineMarkers
   };
 })(window);
