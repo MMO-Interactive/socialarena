@@ -1,9 +1,8 @@
 <?php
-if (session_status() !== PHP_SESSION_ACTIVE) {
-    if (session_status() !== PHP_SESSION_ACTIVE) {
-    session_start();
-}
+require_once __DIR__ . '/platform_split.php';
 
+if (session_status() !== PHP_SESSION_ACTIVE) {
+    session_start();
 }
 
 if (!isset($pdo)) {
@@ -37,6 +36,13 @@ if (!empty($_SESSION['user_id'])) {
 </head>
 <body<?php echo !empty($body_class) ? ' class="' . htmlspecialchars($body_class) . '"' : ''; ?>>
     <header class="site-header">
-        <h1>SocialArena.org</h1>
-        <p class="site-subtitle">Series and screenplay workspace</p>
-    </header> 
+        <h1><?php echo sa_is_creator_host() ? 'Create.SocialArena.org' : 'SocialArena.org'; ?></h1>
+        <p class="site-subtitle"><?php echo sa_is_creator_host() ? 'Full creator studio suite' : 'Series and screenplay workspace'; ?></p>
+        <p class="site-subtitle">
+            <?php if (sa_is_creator_host()): ?>
+                Streaming portal: <a href="<?php echo htmlspecialchars(sa_get_stream_hub_url()); ?>">socialarena.org</a>
+            <?php else: ?>
+                Creator portal: <a href="<?php echo htmlspecialchars(sa_get_creator_hub_url()); ?>">create.socialarena.org</a>
+            <?php endif; ?>
+        </p>
+    </header>

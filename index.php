@@ -1,11 +1,14 @@
 <?php
 require_once 'includes/db_connect.php';
+require_once 'includes/platform_split.php';
 if (session_status() !== PHP_SESSION_ACTIVE) {
     session_start();
 }
 
 
 $theme = 'light';
+$creatorHubUrl = sa_get_creator_hub_url();
+$isCreatorExperience = sa_is_creator_host();
 
 // Allow logged-in users to view the public discovery page.
 
@@ -116,7 +119,7 @@ if (!$featured) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SocialArena.org | Discover</title>
+    <title><?php echo $isCreatorExperience ? "Create.SocialArena.org | Creator Platform" : "SocialArena.org | Streaming Platform"; ?></title>
     <link rel="stylesheet" href="css/themes/<?php echo $theme; ?>.css">
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/discover.css">
@@ -127,20 +130,66 @@ if (!$featured) {
     <?php include 'includes/public_header.php'; ?>
 
     <main>
+        <?php if ($isCreatorExperience): ?>
+        <section class="discover-hero">
+            <div class="hero-overlay"></div>
+            <div class="hero-content">
+                <span class="hero-badge">Creator Platform</span>
+                <h1>Build stories, studios, and releases on create.socialarena.org</h1>
+                <p>Your dedicated creator site includes writing, casting, production planning, release management, and studio collaboration workflows.</p>
+                <div class="hero-actions">
+                    <?php if (isset($_SESSION['user_id'])): ?>
+                        <a href="dashboard.php" class="btn">Open Creator Dashboard</a>
+                    <?php else: ?>
+                        <a href="register.php" class="btn">Create Your Studio</a>
+                    <?php endif; ?>
+                    <a href="<?php echo htmlspecialchars(sa_get_stream_hub_url()); ?>" class="btn btn-secondary">Go to Streaming Site</a>
+                </div>
+            </div>
+        </section>
+
+        <section class="platform-split">
+            <div class="split-card split-card-creator">
+                <span class="split-label">Creator Workflows</span>
+                <h2>Full creator suite</h2>
+                <p>Plan series, write stories, generate media, manage studios, and publish releases in one connected workspace.</p>
+                <a href="dashboard.php">Open Studio Tools -></a>
+            </div>
+            <div class="split-card">
+                <span class="split-label">Viewer Experience</span>
+                <h2>Streaming lives on socialarena.org</h2>
+                <p>When you are ready to share, your audience watches films and series on the main streaming platform.</p>
+                <a href="<?php echo htmlspecialchars(sa_get_stream_hub_url()); ?>">Open Streaming Platform -></a>
+            </div>
+        </section>
+        <?php else: ?>
         <section class="discover-hero <?php echo !empty($featured['thumbnail_url']) ? 'has-image' : ''; ?>" style="<?php echo !empty($featured['thumbnail_url']) ? 'background-image: url(' . htmlspecialchars($featured['thumbnail_url']) . ');' : ''; ?>">
             <div class="hero-overlay"></div>
             <div class="hero-content">
-                <span class="hero-badge">Featured Film</span>
+                <span class="hero-badge">Streaming Platform</span>
                 <h1><?php echo htmlspecialchars($featured['title'] ?? 'Your next AI film'); ?></h1>
-                <p><?php echo htmlspecialchars($featured['description'] ?? 'Discover AI-generated films, episodic universes, and virtual studios shaping the next era of storytelling.'); ?></p>
+                <p><?php echo htmlspecialchars($featured['description'] ?? 'Stream AI-generated films, clips, and series. The full creator studio now lives at create.socialarena.org.'); ?></p>
                 <div class="hero-actions">
-                    <a href="join.php" class="btn">Join the Studio</a>
-                    <a href="login.php" class="btn btn-secondary">Open Studio</a>
+                    <a href="join.php" class="btn">Start Watching</a>
+                    <a href="<?php echo htmlspecialchars($creatorHubUrl); ?>" class="btn btn-secondary" target="_blank" rel="noopener noreferrer">Go to Creator Site</a>
                 </div>
                 <div class="hero-meta">
                     <span><?php echo htmlspecialchars($featured['genre'] ?? 'Experimental'); ?></span>
                     <span><?php echo htmlspecialchars($featured['author'] ?? 'Studio Creator'); ?></span>
                 </div>
+            </div>
+        </section>
+        <section class="platform-split">
+            <div class="split-card">
+                <span class="split-label">Watch on socialarena.org</span>
+                <h2>Streaming is now the main experience</h2>
+                <p>Discover films, trailers, clips, and public studio drops directly on the main domain.</p>
+            </div>
+            <div class="split-card split-card-creator">
+                <span class="split-label">Build on create.socialarena.org</span>
+                <h2>Creators get a dedicated full site</h2>
+                <p>Story development, studio management, and production tools are now centered in a standalone creator platform.</p>
+                <a href="<?php echo htmlspecialchars($creatorHubUrl); ?>" target="_blank" rel="noopener noreferrer">Open Creator Platform -></a>
             </div>
         </section>
 
@@ -376,7 +425,8 @@ if (!$featured) {
                                 <?php endif; ?>
                                 <div>
                                     <h3><?php echo htmlspecialchars($studio['name']); ?></h3>
-                                    <span><?php echo (int)$studio['member_count']; ?> members · <?php echo (int)$studio['follower_count']; ?> followers</span>
+        <?php endif; ?>
+                                    <span><?php echo (int)$studio['member_count']; ?> members Â· <?php echo (int)$studio['follower_count']; ?> followers</span>
                                 </div>
                             </div>
                             <p><?php echo htmlspecialchars($studio['description'] ?? ''); ?></p>

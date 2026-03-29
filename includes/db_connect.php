@@ -1,5 +1,8 @@
 <?php
 require_once __DIR__ . '/session_bootstrap.php';
+require_once __DIR__ . '/platform_split.php';
+sa_enforce_platform_domain();
+
 $host = getenv('DB_HOST') ?: 'localhost';
 $dbname = getenv('DB_NAME') ?: 'adventure_story';
 $username = getenv('DB_USER') ?: 'root';
