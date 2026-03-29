@@ -6,6 +6,51 @@ require_once __DIR__ . '/bootstrap.php';
 
 $segments = api_route_segments();
 
+if (($segments[0] ?? '') === 'health' && count($segments) === 1) {
+    api_require_method('GET');
+    api_success([
+        'status' => 'ok',
+        'service' => 'socialarena-editor-api',
+        'time' => gmdate('c'),
+    ]);
+}
+
+if (($segments[0] ?? '') === 'meta' && count($segments) === 1) {
+    api_require_method('GET');
+    api_success([
+        'api' => [
+            'name' => 'SocialArena Editor API',
+            'version' => 'v1',
+            'auth' => [
+                'primary' => 'session_bearer',
+                'headers' => ['Authorization: Bearer <session_id>', 'X-Editor-Session: <session_id>'],
+            ],
+            'features' => [
+                'studio_scoping' => true,
+                'session_introspection' => true,
+                'strict_studio_selection' => true,
+                'healthcheck' => true,
+                'studio_listing' => true,
+                'session_bootstrap' => true,
+                'auth_capabilities' => true,
+                'project_summary' => true,
+                'project_management' => true,
+                'idea_board' => true,
+                'generation_starting_images' => true,
+                'generation_video_clips' => true,
+                'bridge_clips' => true,
+                'timeline' => true,
+                'exports' => true,
+                'request_id' => true,
+            ],
+            'routes' => [
+                'public' => ['GET /health', 'GET /meta', 'POST /auth/editor-login'],
+                'authenticated' => ['GET /auth/session', 'POST /auth/refresh', 'GET /auth/me', 'GET /auth/studios', 'GET /auth/capabilities', 'POST /auth/select-studio', 'POST /auth/logout'],
+            ],
+        ],
+    ]);
+}
+
 if (($segments[0] ?? '') === 'auth' && ($segments[1] ?? '') === 'editor-login') {
     api_require_method('POST');
     $data = api_request_json();
@@ -36,7 +81,8 @@ if (($segments[0] ?? '') === 'auth' && ($segments[1] ?? '') === 'editor-login') 
         'token' => session_id(),
         'user' => [
             'id' => (int) $user['id'],
-            'username' => $user['username'],
+            'username' => (string) $user['username'],
+            'email' => (string) $user['email'],
         ],
         'studios' => $studios,
         'current_studio_id' => api_current_studio_id(),
@@ -44,25 +90,31 @@ if (($segments[0] ?? '') === 'auth' && ($segments[1] ?? '') === 'editor-login') 
     ]);
 }
 
+if (($segments[0] ?? '') === 'auth' && ($segments[1] ?? '') === 'session') {
+    api_require_method('GET');
+    $userId = api_require_auth();
+    api_success(api_auth_context($pdo, $userId));
+}
+
 if (($segments[0] ?? '') === 'auth' && ($segments[1] ?? '') === 'refresh') {
     api_require_method('POST');
     $userId = api_require_auth();
+    api_success(api_auth_context($pdo, $userId));
+}
 
-    $stmt = $pdo->prepare('SELECT id, username FROM users WHERE id = ? LIMIT 1');
-    $stmt->execute([$userId]);
-    $user = $stmt->fetch();
-    if (!$user) {
-        api_error('USER_NOT_FOUND', 'Authenticated user could not be found.', 404);
-    }
+if (($segments[0] ?? '') === 'auth' && ($segments[1] ?? '') === 'me') {
+    api_require_method('GET');
+    $userId = api_require_auth();
+    $user = api_user_profile($pdo, $userId);
 
     $studios = api_list_user_studios($pdo, $userId);
     api_set_current_studio_id(api_resolve_current_studio_id($studios, api_current_studio_id()));
 
     api_success([
-        'token' => session_id(),
         'user' => [
             'id' => (int) $user['id'],
-            'username' => $user['username'],
+            'username' => (string) $user['username'],
+            'email' => (string) $user['email'],
         ],
         'studios' => $studios,
         'current_studio_id' => api_current_studio_id(),
@@ -75,11 +127,45 @@ if (($segments[0] ?? '') === 'auth' && ($segments[1] ?? '') === 'select-studio')
     $userId = api_require_auth();
     $data = api_request_json();
     $studios = api_list_user_studios($pdo, $userId);
-    $currentStudioId = api_resolve_current_studio_id($studios, $data['studio_id'] ?? null);
+    $requestedStudioId = api_require_studio_id($data['studio_id'] ?? null);
+    api_require_studio_membership($pdo, $userId, $requestedStudioId);
+    api_set_current_studio_id($requestedStudioId);
+    api_success([
+        'studios' => $studios,
+        'current_studio_id' => api_current_studio_id(),
+    ]);
+}
+
+if (($segments[0] ?? '') === 'auth' && ($segments[1] ?? '') === 'studios') {
+    api_require_method('GET');
+    $userId = api_require_auth();
+    $studios = api_list_user_studios($pdo, $userId);
+    $currentStudioId = api_resolve_current_studio_id($studios, api_current_studio_id());
     api_set_current_studio_id($currentStudioId);
     api_success([
         'studios' => $studios,
         'current_studio_id' => api_current_studio_id(),
+    ]);
+}
+
+if (($segments[0] ?? '') === 'auth' && ($segments[1] ?? '') === 'capabilities') {
+    api_require_method('GET');
+    $userId = api_require_auth();
+    $studios = api_list_user_studios($pdo, $userId);
+    $roles = array_values(array_unique(array_map(
+        static fn (array $studio): string => strtolower((string) ($studio['role'] ?? 'member')),
+        $studios
+    )));
+    sort($roles);
+
+    api_success([
+        'capabilities' => [
+            'can_access_editor' => true,
+            'can_manage_studio' => in_array('owner', $roles, true) || in_array('admin', $roles, true),
+            'can_create_projects' => !empty($studios),
+            'roles' => $roles,
+            'studio_count' => count($studios),
+        ],
     ]);
 }
 
@@ -129,7 +215,7 @@ if (($segments[0] ?? '') === 'editor' && ($segments[1] ?? '') === 'projects' && 
         ], 201);
     }
 
-    api_error('METHOD_NOT_ALLOWED', 'Unsupported HTTP method.', 405);
+    api_method_not_allowed(['GET', 'POST']);
 }
 
 if (($segments[0] ?? '') === 'editor' && ($segments[1] ?? '') === 'projects' && count($segments) === 4) {
@@ -158,6 +244,32 @@ if (($segments[0] ?? '') === 'editor' && ($segments[1] ?? '') === 'projects' && 
             'scenes' => api_story_scenes($pdo, api_project_story_id($project)),
             'clips' => api_story_clips($pdo, api_project_story_id($project)),
             'asset_count' => count(api_project_assets($pdo, $userId, $project)),
+        ],
+    ]);
+}
+
+if (($segments[0] ?? '') === 'editor' && ($segments[1] ?? '') === 'projects' && count($segments) === 5 && $segments[4] === 'summary') {
+    api_require_method('GET');
+    api_resolve_effective_studio_id($pdo, $userId, ['allow_null' => true]);
+    $type = $segments[2];
+    $projectId = (int) $segments[3];
+    $project = api_require_project_in_scope($pdo, $userId, $type, $projectId);
+
+    $storyId = api_project_story_id($project);
+    $scenes = api_story_scenes($pdo, $storyId);
+    $clips = api_story_clips($pdo, $storyId);
+    $assets = api_project_assets($pdo, $userId, $project);
+
+    api_success([
+        'summary' => [
+            'project_id' => (int) $project['id'],
+            'project_type' => (string) $project['type'],
+            'story_id' => $storyId !== null ? (int) $storyId : null,
+            'scene_count' => count($scenes),
+            'clip_count' => count($clips),
+            'asset_count' => count($assets),
+            'status' => (string) ($project['status'] ?? 'draft'),
+            'updated_at' => $project['updated_at'] ?? null,
         ],
     ]);
 }
@@ -213,7 +325,7 @@ if (($segments[0] ?? '') === 'editor' && ($segments[1] ?? '') === 'projects' && 
         ]);
     }
 
-    api_error('METHOD_NOT_ALLOWED', 'Unsupported HTTP method.', 405);
+    api_method_not_allowed(['GET', 'POST']);
 }
 
 if (($segments[0] ?? '') === 'editor' && ($segments[1] ?? '') === 'projects' && count($segments) === 6 && $segments[4] === 'starting-images' && $segments[5] === 'generate') {
@@ -510,7 +622,7 @@ if (($segments[0] ?? '') === 'editor' && ($segments[1] ?? '') === 'projects' && 
         ], 201);
     }
 
-    api_error('METHOD_NOT_ALLOWED', 'Unsupported HTTP method.', 405);
+    api_method_not_allowed(['GET', 'POST']);
 }
 
 if (($segments[0] ?? '') === 'editor' && ($segments[1] ?? '') === 'timeline' && count($segments) === 4 && $segments[3] === 'autosave') {

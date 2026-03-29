@@ -5,6 +5,34 @@ declare(strict_types=1);
 ini_set('display_errors', '0');
 ini_set('html_errors', '0');
 
+function api_sanitize_request_id(?string $candidate): ?string
+{
+    if ($candidate === null) {
+        return null;
+    }
+
+    $value = trim($candidate);
+    if ($value === '') {
+        return null;
+    }
+
+    if (!preg_match('/^[A-Za-z0-9._-]{8,128}$/', $value)) {
+        return null;
+    }
+
+    return $value;
+}
+
+function api_generate_request_id(): string
+{
+    return 'req_' . bin2hex(random_bytes(12));
+}
+
+function api_request_id(): string
+{
+    return $GLOBALS['api_request_id'];
+}
+
 function api_get_bearer_token(): ?string
 {
     $editorSessionHeader = $_SERVER['HTTP_X_EDITOR_SESSION'] ?? '';
@@ -27,7 +55,15 @@ if ($apiBearerToken !== null && session_status() !== PHP_SESSION_ACTIVE) {
 
 require_once dirname(__DIR__, 2) . '/includes/db_connect.php';
 
+try {
+    $incomingRequestId = api_sanitize_request_id($_SERVER['HTTP_X_REQUEST_ID'] ?? null);
+    $GLOBALS['api_request_id'] = $incomingRequestId ?? api_generate_request_id();
+} catch (Throwable $requestIdException) {
+    $GLOBALS['api_request_id'] = 'req_fallback_' . uniqid('', true);
+}
+
 header('Content-Type: application/json');
+header('X-Request-Id: ' . api_request_id());
 
 function api_json_response(array $payload, int $status = 200): void
 {
@@ -38,6 +74,13 @@ function api_json_response(array $payload, int $status = 200): void
 
 function api_success(array $payload = [], int $status = 200): void
 {
+    if (!array_key_exists('success', $payload)) {
+        $payload['success'] = true;
+    }
+    if (!array_key_exists('request_id', $payload)) {
+        $payload['request_id'] = api_request_id();
+    }
+
     api_json_response($payload, $status);
 }
 
@@ -49,6 +92,7 @@ function api_error(string $code, string $message, int $status = 400): void
             'code' => $code,
             'message' => $message,
         ],
+        'request_id' => api_request_id(),
     ], $status);
 }
 
@@ -90,8 +134,26 @@ function api_require_auth(): int
 function api_require_method(string $expectedMethod): void
 {
     if (strtoupper($_SERVER['REQUEST_METHOD'] ?? 'GET') !== strtoupper($expectedMethod)) {
-        api_error('METHOD_NOT_ALLOWED', 'Unsupported HTTP method.', 405);
+        api_method_not_allowed([$expectedMethod]);
     }
+}
+
+function api_method_not_allowed(array $allowedMethods): void
+{
+    $normalized = array_values(array_unique(array_map(
+        static fn ($method): string => strtoupper((string) $method),
+        $allowedMethods
+    )));
+
+    if ($normalized) {
+        header('Allow: ' . implode(', ', $normalized));
+    }
+
+    api_error(
+        'METHOD_NOT_ALLOWED',
+        'Unsupported HTTP method. Allowed: ' . implode(', ', $normalized),
+        405
+    );
 }
 
 function api_route_segments(): array
@@ -138,6 +200,50 @@ function api_list_user_studios(PDO $pdo, int $userId): array
     }
 
     return $studios;
+}
+
+function api_user_profile(PDO $pdo, int $userId): array
+{
+    $stmt = $pdo->prepare('SELECT id, username, email FROM users WHERE id = ? LIMIT 1');
+    $stmt->execute([$userId]);
+    $user = $stmt->fetch();
+    if (!$user) {
+        api_error('USER_NOT_FOUND', 'Authenticated user could not be found.', 404);
+    }
+
+    return [
+        'id' => (int) $user['id'],
+        'username' => (string) $user['username'],
+        'email' => (string) $user['email'],
+    ];
+}
+
+function api_require_studio_id($candidate): int
+{
+    if ($candidate === null || $candidate === '') {
+        api_error('INVALID_STUDIO', 'studio_id is required.', 400);
+    }
+
+    if (!is_numeric($candidate) || (int) $candidate <= 0) {
+        api_error('INVALID_STUDIO', 'studio_id must be a positive integer.', 400);
+    }
+
+    return (int) $candidate;
+}
+
+function api_auth_context(PDO $pdo, int $userId): array
+{
+    $user = api_user_profile($pdo, $userId);
+    $studios = api_list_user_studios($pdo, $userId);
+    api_set_current_studio_id(api_resolve_current_studio_id($studios, api_current_studio_id()));
+
+    return [
+        'token' => session_id(),
+        'user' => $user,
+        'studios' => $studios,
+        'current_studio_id' => api_current_studio_id(),
+        'expires_at' => api_session_expiry_iso(),
+    ];
 }
 
 function api_resolve_current_studio_id(array $studios, $requestedStudioId): ?int
