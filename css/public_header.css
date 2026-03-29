@@ -46,6 +46,13 @@
     padding: 8px 14px;
 }
 
+.public-nav .nav-creators-link {
+    border: 1px solid rgba(79, 209, 197, 0.45);
+    border-radius: 999px;
+    padding: 7px 12px;
+    color: #8ef3e6;
+}
+
 .public-nav .nav-status {
     font-size: 0.75em;
     letter-spacing: 0.2em;
@@ -99,6 +106,10 @@
 
     .public-nav .btn {
         padding: 7px 12px;
+    }
+
+    .public-nav .nav-creators-link {
+        padding: 6px 10px;
     }
 
     .discover-hero,

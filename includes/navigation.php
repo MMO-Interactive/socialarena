@@ -1,3 +1,6 @@
+<?php
+require_once __DIR__ . '/platform_split.php';
+?>
 <nav class="side-nav">
     <div class="nav-section">
         <h3>Navigation</h3>
@@ -20,6 +23,11 @@
             <li><a href="talent_scout.php">Talent Scout</a></li>
             <li><a href="manage_keys.php">Manage API Keys</a></li>
             <li><a href="settings_account.php">Settings</a></li>
+            <?php if (sa_is_creator_host()): ?>
+                <li><a href="<?php echo htmlspecialchars(sa_get_stream_hub_url()); ?>" target="_blank" rel="noopener noreferrer">Open Streaming Site</a></li>
+            <?php else: ?>
+                <li><a href="<?php echo htmlspecialchars(sa_get_creator_hub_url()); ?>" target="_blank" rel="noopener noreferrer">Open Creator Site</a></li>
+            <?php endif; ?>
             <li class="nav-divider"></li>
             <li><a href="logout.php">Logout</a></li>
         </ul>
